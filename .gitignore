@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+
+# Data
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# EPG cache
+data/epg_cache/
+
+# Generated files
+playlist/*.m3u
+playlist/epg.xml
+
+# Old files
+checker.cat
+checker.py
+checker.pypy
+checketcop.py
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+
+# Backups
+*.tar.gz

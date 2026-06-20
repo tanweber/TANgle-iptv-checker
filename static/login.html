@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TANgle - Вход</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f1117; color: #e1e4e8; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .login-box { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 32px; width: 360px; }
+        .login-box h1 { text-align: center; color: #58a6ff; margin-bottom: 24px; font-size: 22px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 13px; color: #8b949e; margin-bottom: 6px; }
+        .form-group input { width: 100%; background: #0d1117; border: 1px solid #30363d; color: #e1e4e8; padding: 10px 14px; border-radius: 6px; font-size: 15px; }
+        .form-group input:focus { border-color: #58a6ff; outline: none; }
+        .btn { width: 100%; background: #238636; color: #fff; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: 600; }
+        .btn:hover { background: #2ea043; }
+        .error { background: #da363320; border: 1px solid #da3633; color: #f85149; padding: 10px; border-radius: 6px; margin-bottom: 16px; font-size: 14px; text-align: center; display: none; }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h1>TANgle<br><span style="font-size:12px;color:#8b949e;font-weight:400;">IPTV checker</span></h1>
+        <div class="error" id="error-msg">Неверный логин или пароль</div>
+        <form onsubmit="doLogin(event)">
+            <div class="form-group">
+                <label>Логин</label>
+                <input type="text" id="login" autocomplete="username" required>
+            </div>
+            <div class="form-group">
+                <label>Пароль</label>
+                <input type="password" id="password" autocomplete="current-password" required>
+            </div>
+            <button type="submit" class="btn">Войти</button>
+        </form>
+    </div>
+    <script>
+    async function doLogin(e) {
+        e.preventDefault();
+        document.getElementById('error-msg').style.display = 'none';
+        const res = await fetch('/api/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                login: document.getElementById('login').value,
+                password: document.getElementById('password').value
+            })
+        });
+        if (res.ok) {
+            window.location.href = '/';
+        } else {
+            document.getElementById('error-msg').style.display = 'block';
+        }
+    }
+    </script>
+</body>
+</html>

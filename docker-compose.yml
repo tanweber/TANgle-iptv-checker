@@ -1,0 +1,22 @@
+services:
+  tangle:
+    build: .
+    image: tangle:latest
+    container_name: tangle
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DB_PATH=/data/iptv.db
+      - PLAYLIST_PATH=/playlist/rus_fixed.m3u
+      - EPG_PATH=/playlist/epg.xml
+    volumes:
+      - ./data:/data
+      - ./playlist:/playlist
+    ports:
+      - "9239:9239"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9239/api/check_login"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
