@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TANgle - IPTV Checker</title>
+    <script src="/static/translations.js"></script>
     <style>
         :root {
             --bg: #0f1117; --bg-card: #161b22; --bg-input: #0d1117; --bg-hover: #1c2128;
@@ -206,22 +207,26 @@
             <div class="header-left">
                 <h1>TANgle</h1>
                 <div class="nav">
-                    <button class="active" onclick="showPanel('channels', this)">Каналы</button>
-                    <button onclick="showPanel('sources', this)">Источники</button>
-                    <button onclick="showPanel('settings', this)">Настройки</button>
-                    <button onclick="showPanel('access', this)">Подключения</button>
+                    <button class="active" onclick="showPanel('channels', this)" data-t="nav_channels">Каналы</button>
+                    <button onclick="showPanel('sources', this)" data-t="nav_sources">Источники</button>
+                    <button onclick="showPanel('settings', this)" data-t="nav_settings">Настройки</button>
+                    <button onclick="showPanel('access', this)" data-t="nav_access">Подключения</button>
                 </div>
             </div>
             <div class="header-right">
-                <button class="btn-blue btn-small" onclick="downloadPlaylist()" style="background:var(--blue);color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:13px;">Скачать плейлист</button>
+                <button class="btn-blue btn-small" onclick="downloadPlaylist()" style="background:var(--blue);color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:13px;" data-t="btn_download">Скачать плейлист</button>
+                <button class="theme-btn" onclick="toggleLang()" id="lang-btn" title="Сменить язык">RU</button>
                 <button class="theme-btn" onclick="toggleTheme()" id="theme-btn" title="Сменить тему">🌙</button>
-                <button class="btn-logout" onclick="logout()">Выйти</button>
+                <button class="btn-logout" onclick="logout()" data-t="btn_logout">Выйти</button>
             </div>
         </div>
     </div>
 
     <div class="stats-bar" style="background:var(--bg-card);border-bottom:1px solid var(--border);padding:8px 24px;display:flex;justify-content:center;">
-        <div id="playlist-info" style="font-size:13px;color:var(--text-muted);max-width:1200px;width:100%;text-align:center;line-height:1.5;"></div>
+        <div style="max-width:1200px;width:100%;text-align:center;line-height:1.5;">
+            <div id="playlist-info" style="font-size:13px;color:var(--text-muted);"></div>
+            <div id="playlist-address" style="font-size:12px;color:var(--accent);margin-top:4px;"></div>
+        </div>
     </div>
 
     <div class="container">
@@ -233,37 +238,37 @@
         <div id="panel-channels" class="panel active">
             <div class="stats" id="stats-grid"></div>
             <div class="panel-header">
-                <h2>Каналы</h2>
+                <h2 data-t="nav_channels">Каналы</h2>
                 <div style="display:flex;gap:8px;align-items:center;">
-                    <button class="btn btn-secondary btn-small" onclick="toggleFilters('ch')" id="ch-filter-toggle">+ Фильтры</button>
-                    <button class="btn" onclick="triggerCheck()" id="check-btn">Проверить сейчас</button>
+                    <button class="btn btn-secondary btn-small" onclick="toggleFilters('ch')" id="ch-filter-toggle" data-t="btn_filters">+ Фильтры</button>
+                    <button class="btn" onclick="triggerCheck()" id="check-btn" data-t="btn_check">Проверить сейчас</button>
                 </div>
             </div>
             <div class="search-bar" id="ch-filters" style="display:none;">
-                <input type="text" id="ch-search" placeholder="Поиск каналов..." oninput="renderChannels()">
+                <input type="text" id="ch-search" data-t-placeholder="search_channels" placeholder="Поиск каналов..." oninput="renderChannels()">
                 <select id="ch-filter" onchange="renderChannels()">
-                    <option value="all">Все</option>
-                    <option value="alive">Живые</option>
-                    <option value="fast">Быстрые (&lt;1с)</option>
-                    <option value="medium">Средние (1-3с)</option>
-                    <option value="slow">Медленные (&gt;3с)</option>
-                    <option value="dead">Мёртвые</option>
-                    <option value="unchecked">Не проверены</option>
+                    <option value="all" data-t="filter_all">Все</option>
+                    <option value="alive" data-t="filter_alive">Живые</option>
+                    <option value="fast" data-t="filter_fast">Быстрые (&lt;1с)</option>
+                    <option value="medium" data-t="filter_medium">Средние (1-3с)</option>
+                    <option value="slow" data-t="filter_slow">Медленные (&gt;3с)</option>
+                    <option value="dead" data-t="filter_dead">Мёртвые</option>
+                    <option value="unchecked" data-t="filter_unchecked">Не проверены</option>
                 </select>
-                <select id="ch-group-filter" onchange="renderChannels()"><option value="">Все группы</option></select>
-                <select id="ch-source-filter" onchange="renderChannels()"><option value="">Все источники</option></select>
+                <select id="ch-group-filter" onchange="renderChannels()"><option value="" data-t="all_groups">Все группы</option></select>
+                <select id="ch-source-filter" onchange="renderChannels()"><option value="" data-t="all_sources">Все источники</option></select>
             </div>
             <div class="table-scroll">
                 <table>
                     <thead><tr>
-                        <th onclick="sortChannels('status')">Статус <span class="sort-arrow">▲</span></th>
-                        <th onclick="sortChannels('name')">Название <span class="sort-arrow">▲</span></th>
-                        <th onclick="sortChannels('group')">Группа <span class="sort-arrow">▲</span></th>
-                        <th onclick="sortChannels('source')">Источник <span class="sort-arrow">▲</span></th>
-                        <th onclick="sortChannels('response')">Отклик <span class="sort-arrow">▲</span></th>
-                        <th onclick="sortChannels('availability')">Доступность <span class="sort-arrow">▲</span></th>
-                        <th onclick="sortChannels('last_check')">Проверен <span class="sort-arrow">▲</span></th>
-                        <th onclick="sortChannels('url')">URL <span class="sort-arrow">▲</span></th>
+                        <th onclick="sortChannels('status')"><span data-t="col_status">Статус</span> <span class="sort-arrow">▲</span></th>
+                        <th onclick="sortChannels('name')"><span data-t="col_name">Название</span> <span class="sort-arrow">▲</span></th>
+                        <th onclick="sortChannels('group')"><span data-t="col_group">Группа</span> <span class="sort-arrow">▲</span></th>
+                        <th onclick="sortChannels('source')"><span data-t="col_source">Источник</span> <span class="sort-arrow">▲</span></th>
+                        <th onclick="sortChannels('response')"><span data-t="col_response">Отклик</span> <span class="sort-arrow">▲</span></th>
+                        <th onclick="sortChannels('availability')"><span data-t="col_availability">Доступность</span> <span class="sort-arrow">▲</span></th>
+                        <th onclick="sortChannels('last_check')"><span data-t="col_last_check">Проверен</span> <span class="sort-arrow">▲</span></th>
+                        <th onclick="sortChannels('url')"><span data-t="col_url">URL</span> <span class="sort-arrow">▲</span></th>
                     </tr></thead>
                     <tbody id="all-channels"></tbody>
                 </table>
@@ -273,24 +278,24 @@
 
         <div id="panel-sources" class="panel">
             <div class="panel-header">
-                <h2>Источники плейлистов</h2>
-                <button class="btn" onclick="showSourceModal()">Добавить источник</button>
+                <h2 data-t="sources_playlists">Источники плейлистов</h2>
+                <button class="btn" onclick="showSourceModal()" data-t="btn_add_source">Добавить источник</button>
             </div>
             <div class="table-scroll">
                 <table>
-                    <thead><tr><th>Название</th><th>URL</th><th>Статус</th><th>Каналов</th><th>Проверен</th><th>Активен</th><th>Действия</th></tr></thead>
+                    <thead><tr><th data-t="col_name">Название</th><th data-t="col_url">URL</th><th data-t="col_status">Статус</th><th data-t="col_channels_count">Каналов</th><th data-t="col_last_check">Проверен</th><th data-t="col_enabled">Активен</th><th data-t="col_actions">Действия</th></tr></thead>
                     <tbody id="sources-list"></tbody>
                 </table>
             </div>
 
             <div style="margin-top:28px;">
                 <div class="panel-header">
-                    <h2>Источники ТВ-программы (EPG)</h2>
-                    <button class="btn" onclick="showEPGSourceModal()">Добавить EPG источник</button>
+                    <h2 data-t="sources_epg">Источники ТВ-программы (EPG)</h2>
+                    <button class="btn" onclick="showEPGSourceModal()" data-t="btn_add_epg">Добавить EPG источник</button>
                 </div>
                 <div class="table-scroll">
                     <table>
-                        <thead><tr><th>Название</th><th>URL</th><th>Активен</th><th>Статус</th><th>Каналов</th><th>Обновлено</th><th>Действия</th></tr></thead>
+                        <thead><tr><th data-t="col_name">Название</th><th data-t="col_url">URL</th><th data-t="col_enabled">Активен</th><th data-t="col_status">Статус</th><th data-t="col_channels_count">Каналов</th><th>Обновлено</th><th data-t="col_actions">Действия</th></tr></thead>
                         <tbody id="epg-sources-list"></tbody>
                     </table>
                 </div>
@@ -313,97 +318,97 @@
                         <label>Параллельных потоков</label>
                         <input type="number" id="set-parallel" min="1" max="200">
                     </div>
-                    <button class="btn" onclick="saveSettings()">Сохранить</button>
+                    <button class="btn" onclick="saveSettings()" data-t="btn_save">Сохранить</button>
                 </div>
 
                 <div class="settings-card">
-                    <h3>Правила формирования плейлиста</h3>
+                    <h3 data-t="playlist_rules">Правила формирования плейлиста</h3>
                     <div class="form-group">
-                        <label>Минимальная доступность (%)</label>
+                        <label data-t="min_availability">Минимальная доступность (%)</label>
                         <input type="number" id="set-min-availability" min="0" max="100" step="5">
-                        <span style="font-size:11px;color:var(--text-muted);margin-top:4px;display:block;">Каналы с доступностью ниже этого значения не попадут в плейлист</span>
+                        <span style="font-size:11px;color:var(--text-muted);margin-top:4px;display:block;" data-t="min_availability_desc">Каналы с доступностью ниже этого значения не попадут в плейлист</span>
                     </div>
                     <div class="checkbox-group">
                         <div class="checkbox-item">
                             <input type="checkbox" id="pl-all" onchange="onPlaylistAllChange(this.checked)">
-                            <label for="pl-all">Все каналы</label>
-                            <span class="desc speed-fast">включает все категории</span>
+                            <label for="pl-all" data-t="all_channels">Все каналы</label>
+                            <span class="desc speed-fast" data-t="all_channels_desc">включает все категории</span>
                         </div>
                         <div class="checkbox-item">
                             <input type="checkbox" id="pl-fast" onchange="onPlaylistSubChange('fast', this.checked)">
-                            <label for="pl-fast">Быстрые <span class="speed-fast">(&lt;1с)</span></label>
-                            <span class="desc">зелёные</span>
+                            <label for="pl-fast"><span data-t="fast_channels">Быстрые</span> <span class="speed-fast">(&lt;1с)</span></label>
+                            <span class="desc" data-t="fast_desc">зелёные</span>
                         </div>
                         <div class="checkbox-item">
                             <input type="checkbox" id="pl-medium" onchange="onPlaylistSubChange('medium', this.checked)">
-                            <label for="pl-medium">Средние <span class="speed-medium">(1-3с)</span></label>
-                            <span class="desc">жёлтые</span>
+                            <label for="pl-medium"><span data-t="medium_channels">Средние</span> <span class="speed-medium">(1-3с)</span></label>
+                            <span class="desc" data-t="medium_desc">жёлтые</span>
                         </div>
                         <div class="checkbox-item">
                             <input type="checkbox" id="pl-slow" onchange="onPlaylistSubChange('slow', this.checked)">
-                            <label for="pl-slow">Медленные <span class="speed-slow">(&gt;3с)</span></label>
-                            <span class="desc">красные</span>
+                            <label for="pl-slow"><span data-t="slow_channels">Медленные</span> <span class="speed-slow">(&gt;3с)</span></label>
+                            <span class="desc" data-t="slow_desc">красные</span>
                         </div>
                     </div>
                     <div style="margin-top:12px;">
-                        <button class="btn" onclick="savePlaylistSettings()">Сохранить правила</button>
+                        <button class="btn" onclick="savePlaylistSettings()" data-t="btn_save_rules">Сохранить правила</button>
                     </div>
                 </div>
 
                 <div class="settings-card">
-                    <h3>Авторизация</h3>
+                    <h3 data-t="auth">Авторизация</h3>
                     <div class="form-group">
-                        <label>Логин</label>
+                        <label data-t="label_login">Логин</label>
                         <input type="text" id="set-login">
                     </div>
                     <div class="form-group">
-                        <label>Пароль</label>
+                        <label data-t="label_password">Пароль</label>
                         <input type="password" id="set-password">
                     </div>
                     <div class="form-group">
-                        <label>Повторите пароль</label>
+                        <label data-t="label_password_repeat">Повторите пароль</label>
                         <input type="password" id="set-password-repeat">
                     </div>
-                    <button class="btn" onclick="saveAuthSettings()">Сохранить</button>
+                    <button class="btn" onclick="saveAuthSettings()" data-t="btn_save_auth">Сохранить</button>
                 </div>
 
                 <div class="settings-card">
-                    <h3>Состояние планировщика</h3>
+                    <h3 data-t="scheduler_status">Состояние планировщика</h3>
                     <div id="scheduler-status"></div>
                 </div>
 
                 <div class="settings-card">
-                    <h3>ТВ-программа (EPG)</h3>
+                    <h3 data-t="epg_settings">ТВ-программа (EPG)</h3>
                     <div class="form-group">
-                        <label>Интервал обновления кэша EPG (секунды)</label>
+                        <label data-t="epg_update_interval">Интервал обновления кэша EPG (секунды)</label>
                         <input type="number" id="set-epg-interval" min="3600" step="3600">
                     </div>
-                    <button class="btn" onclick="saveSettings()">Сохранить</button>
+                    <button class="btn" onclick="saveSettings()" data-t="btn_save">Сохранить</button>
                 </div>
 
                 <div class="settings-card">
-                    <h3>Статистика доступности</h3>
+                    <h3 data-t="availability_settings">Статистика доступности</h3>
                     <div class="form-group">
-                        <label>Период расчёта (дни)</label>
+                        <label data-t="availability_period">Период расчёта (дни)</label>
                         <input type="number" id="set-availability-period" min="1" max="365">
-                        <span style="font-size:11px;color:var(--text-muted);margin-top:4px;display:block;">За сколько дней считать процент доступности канала</span>
+                        <span style="font-size:11px;color:var(--text-muted);margin-top:4px;display:block;" data-t="availability_period_desc">За сколько дней считать процент доступности канала</span>
                     </div>
-                    <button class="btn" onclick="saveSettings()">Сохранить</button>
+                    <button class="btn" onclick="saveSettings()" data-t="btn_save">Сохранить</button>
                 </div>
             </div>
         </div>
 
         <div id="panel-access" class="panel">
             <div class="panel-header">
-                <h2>Статистика подключений</h2>
-                <button class="btn btn-secondary btn-small" onclick="toggleFilters('access')" id="access-filter-toggle">+ Фильтры</button>
+                <h2 data-t="access_stats">Статистика подключений</h2>
+                <button class="btn btn-secondary btn-small" onclick="toggleFilters('access')" id="access-filter-toggle" data-t="btn_filters">+ Фильтры</button>
             </div>
             <div class="stats" id="access-stats"></div>
             <div class="search-bar" id="access-filters" style="display:none;">
                 <select id="access-filter" onchange="loadAccessLog()">
-                    <option value="">Все</option>
-                    <option value="playlist">Плейлист</option>
-                    <option value="epg">ТВ-программа</option>
+                    <option value="" data-t="filter_all">Все</option>
+                    <option value="playlist" data-t="filter_playlists">Плейлист</option>
+                    <option value="epg" data-t="filter_epg">ТВ-программа</option>
                 </select>
                 <input type="date" id="access-date-from" onchange="loadAccessLog()">
                 <input type="date" id="access-date-to" onchange="loadAccessLog()">
@@ -411,10 +416,10 @@
             <div class="table-scroll">
                 <table>
                     <thead><tr>
-                        <th>Время</th>
-                        <th>Эндпоинт</th>
-                        <th>IP адрес</th>
-                        <th>Устройство</th>
+                        <th data-t="col_time">Время</th>
+                        <th data-t="col_endpoint">Эндпоинт</th>
+                        <th data-t="col_ip">IP адрес</th>
+                        <th data-t="col_device">Устройство</th>
                     </tr></thead>
                     <tbody id="access-log"></tbody>
                 </table>
@@ -422,8 +427,8 @@
             <div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;">
                 <span id="access-info" style="font-size:12px;color:var(--text-muted);"></span>
                 <div style="display:flex;gap:6px;">
-                    <button class="btn btn-secondary btn-small" id="access-prev" onclick="accessPage(-1)" disabled>← Назад</button>
-                    <button class="btn btn-secondary btn-small" id="access-next" onclick="accessPage(1)" disabled>Вперёд →</button>
+                    <button class="btn btn-secondary btn-small" id="access-prev" onclick="accessPage(-1)" disabled data-t="btn_prev">← Назад</button>
+                    <button class="btn btn-secondary btn-small" id="access-next" onclick="accessPage(1)" disabled data-t="btn_next">Вперёд →</button>
                 </div>
             </div>
         </div>
@@ -431,46 +436,46 @@
 
     <div class="modal-overlay" id="source-modal">
         <div class="modal">
-            <h3 id="modal-title">Добавить источник</h3>
+            <h3 id="modal-title" data-t="add_source">Добавить источник</h3>
             <input type="hidden" id="src-edit-id">
             <div class="form-group">
-                <label>Название</label>
-                <input type="text" id="src-name" placeholder="Например: IPTV Org Russian">
+                <label data-t="label_name">Название</label>
+                <input type="text" id="src-name" data-t-placeholder="source_name_placeholder" placeholder="Например: IPTV Org Russian">
             </div>
             <div class="form-group">
-                <label>URL (.m3u / .m3u8)</label>
-                <input type="url" id="src-url" placeholder="https://example.com/playlist.m3u">
+                <label data-t="label_url">URL (.m3u / .m3u8)</label>
+                <input type="url" id="src-url" data-t-placeholder="source_url_placeholder" placeholder="https://example.com/playlist.m3u">
             </div>
             <div class="form-group" style="display:flex;align-items:center;gap:10px;">
                 <label class="toggle"><input type="checkbox" id="src-enabled" checked><span class="slider"></span></label>
-                <span>Активен</span>
+                <span data-t="label_enabled">Активен</span>
             </div>
             <div class="form-actions">
-                <button class="btn btn-secondary" onclick="closeSourceModal()">Отмена</button>
-                <button class="btn" onclick="saveSource()">Сохранить</button>
+                <button class="btn btn-secondary" onclick="closeSourceModal()" data-t="btn_cancel">Отмена</button>
+                <button class="btn" onclick="saveSource()" data-t="btn_save">Сохранить</button>
             </div>
         </div>
     </div>
 
     <div class="modal-overlay" id="epg-source-modal">
         <div class="modal">
-            <h3 id="epg-modal-title">Добавить EPG источник</h3>
+            <h3 id="epg-modal-title" data-t="add_epg_source">Добавить EPG источник</h3>
             <input type="hidden" id="epg-src-edit-id">
             <div class="form-group">
-                <label>Название</label>
+                <label data-t="label_name">Название</label>
                 <input type="text" id="epg-src-name" placeholder="Например: EPG It999">
             </div>
             <div class="form-group">
-                <label>URL (.xml.gz / .xml)</label>
+                <label data-t="label_epg_url">URL (.xml.gz / .xml)</label>
                 <input type="url" id="epg-src-url" placeholder="http://epg.it999.ru/edem.xml.gz">
             </div>
             <div class="form-group" style="display:flex;align-items:center;gap:10px;">
                 <label class="toggle"><input type="checkbox" id="epg-src-enabled" checked><span class="slider"></span></label>
-                <span>Активен</span>
+                <span data-t="label_enabled">Активен</span>
             </div>
             <div class="form-actions">
-                <button class="btn btn-secondary" onclick="closeEPGSourceModal()">Отмена</button>
-                <button class="btn" onclick="saveEPGSource()">Сохранить</button>
+                <button class="btn btn-secondary" onclick="closeEPGSourceModal()" data-t="btn_cancel">Отмена</button>
+                <button class="btn" onclick="saveEPGSource()" data-t="btn_save">Сохранить</button>
             </div>
         </div>
     </div>
@@ -509,7 +514,21 @@
         document.getElementById('theme-btn').title = next.name;
     }
 
+    function applyTranslations() {
+        document.querySelectorAll('[data-t]').forEach(el => {
+            el.textContent = t(el.getAttribute('data-t'));
+        });
+        document.querySelectorAll('[data-t-placeholder]').forEach(el => {
+            el.placeholder = t(el.getAttribute('data-t-placeholder'));
+        });
+        document.querySelectorAll('[data-t-title]').forEach(el => {
+            el.title = t(el.getAttribute('data-t-title'));
+        });
+    }
+
     initTheme();
+    initLang();
+    applyTranslations();
 
     function api(url, opts = {}) {
         return fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opts })
@@ -525,6 +544,7 @@
         if (name === 'sources') { loadSources(); loadEPGSources(); }
         if (name === 'settings') loadSettings();
         if (name === 'access') { loadAccessStats(); loadAccessLog(); }
+        applyTranslations();
     }
 
     async function loadChannelsPanel() {
@@ -536,16 +556,16 @@
         ]);
         loadPlaylistInfo();
         document.getElementById('stats-grid').innerHTML = `
-            <div class="stat-card"><div class="value">${stats.total_channels}</div><div class="label">Всего каналов</div></div>
-            <div class="stat-card green"><div class="value">${stats.alive_channels}</div><div class="label">Живые</div></div>
-            <div class="stat-card red"><div class="value">${stats.dead_channels}</div><div class="label">Мёртвые</div></div>
-            <div class="stat-card yellow"><div class="value">${stats.sources}</div><div class="label">Источников плейлистов</div></div>
-            <div class="stat-card"><div class="value">${epgSources.length}</div><div class="label">Источников ТВ-программ</div></div>
-            <div class="stat-card"><div class="value">${stats.avg_response_ms != null ? Math.round(stats.avg_response_ms) + 'мс' : '-'}</div><div class="label">Средний отклик</div></div>
+            <div class="stat-card"><div class="value">${stats.total_channels}</div><div class="label">${t('total_channels')}</div></div>
+            <div class="stat-card green"><div class="value">${stats.alive_channels}</div><div class="label">${t('alive')}</div></div>
+            <div class="stat-card red"><div class="value">${stats.dead_channels}</div><div class="label">${t('dead')}</div></div>
+            <div class="stat-card yellow"><div class="value">${stats.sources}</div><div class="label">${t('playlist_sources')}</div></div>
+            <div class="stat-card"><div class="value">${epgSources.length}</div><div class="label">${t('epg_sources')}</div></div>
+            <div class="stat-card"><div class="value">${stats.avg_response_ms != null ? Math.round(stats.avg_response_ms) + 'ms' : '-'}</div><div class="label">${t('avg_response')}</div></div>
         `;
         const btn = document.getElementById('check-btn');
         btn.disabled = status.in_progress;
-        btn.textContent = status.in_progress ? 'Проверка...' : 'Проверить сейчас';
+        btn.textContent = status.in_progress ? t('checking') : t('btn_check');
         if (status.in_progress) pollCheckStatus();
         await loadAllChannels();
     }
@@ -585,11 +605,11 @@
     }
 
     function statusText(ch) {
-        if (ch.last_check == null) return 'Не проверен';
-        if (!ch.is_alive) return 'Мёртвый';
-        if (ch.response_time_ms < 1000) return 'Быстрый';
-        if (ch.response_time_ms < 3000) return 'Средний';
-        return 'Медленный';
+        if (ch.last_check == null) return t('status_unknown');
+        if (!ch.is_alive) return t('status_dead');
+        if (ch.response_time_ms < 1000) return t('status_alive');
+        if (ch.response_time_ms < 3000) return t('status_alive');
+        return t('status_alive');
     }
 
     function statusDot(ch) {
@@ -662,23 +682,26 @@
         try {
             const info = await api('/api/playlist/info');
             const el = document.getElementById('playlist-info');
-            const lastCheck = info.last_check ? fmtDate(info.last_check) : 'не проверялся';
-            const lastEpg = info.last_epg_update ? fmtDate(info.last_epg_update) : 'не обновлялась';
-            const epgInfo = info.epg_channel_count > 0 ? ` | ТВ-программа: <strong>${info.epg_channel_count}</strong> каналов | Кэш: <strong>${lastEpg}</strong>` : '';
-            el.innerHTML = `<span>Плейлист: <strong><span id="playlist-count">${info.channel_count}</span></strong> каналов</span> <span style="margin:0 12px;color:var(--border);">|</span> <span>Последняя проверка: <strong>${lastCheck}</strong></span>${epgInfo}`;
+            const addrEl = document.getElementById('playlist-address');
+            const lastCheck = info.last_check ? fmtDate(info.last_check) : t('not_checked');
+            const lastEpg = info.last_epg_update ? fmtDate(info.last_epg_update) : t('never');
+            const epgInfo = info.epg_channel_count > 0 ? ` | ${t('tvg_program')}: <strong>${info.epg_channel_count}</strong> ${t('channels_word')} | ${t('cache')}: <strong>${lastEpg}</strong>` : '';
+            el.innerHTML = `<span>${t('playlist_info')}: <strong><span id="playlist-count">${info.channel_count}</span></strong> ${t('channels_word')}</span> <span style="margin:0 12px;color:var(--border);">|</span> <span>${t('last_check')}: <strong>${lastCheck}</strong></span>${epgInfo}`;
+            const baseUrl = window.location.origin;
+            addrEl.innerHTML = `${t('playlist_address')}: <a href="${baseUrl}/rus_fixed.m3u" target="_blank" style="color:var(--accent);text-decoration:underline;">${baseUrl}/rus_fixed.m3u</a> &nbsp;|&nbsp; ${t('epg_address')}: <a href="${baseUrl}/epg.xml" target="_blank" style="color:var(--accent);text-decoration:underline;">${baseUrl}/epg.xml</a>`;
         } catch(e) {}
     }
 
     async function triggerCheck() {
         try {
             await api('/api/check', { method: 'POST' });
-            toast('Проверка запущена');
+            toast(t('toast_check_started'));
             document.getElementById('check-btn').disabled = true;
-            document.getElementById('check-btn').textContent = 'Проверка...';
+            document.getElementById('check-btn').textContent = t('checking');
             showProgress(true);
             pollCheckStatus();
         } catch(e) {
-            if (e.status === 409) toast('Проверка уже выполняется', 'error');
+            if (e.status === 409) toast(t('toast_check_running'), 'error');
         }
     }
 
@@ -698,9 +721,9 @@
             if (!s.in_progress) {
                 clearInterval(iv);
                 document.getElementById('check-btn').disabled = false;
-                document.getElementById('check-btn').textContent = 'Проверить сейчас';
+                document.getElementById('check-btn').textContent = t('btn_check');
                 showProgress(false);
-                toast('Проверка завершена');
+                toast(t('toast_check_completed'));
                 loadChannelsPanel();
             }
         }, 1500);
@@ -709,16 +732,16 @@
     async function loadSources() {
         allSourcesData = await api('/api/sources');
         document.getElementById('sources-list').innerHTML = allSourcesData.length === 0
-            ? '<tr><td colspan="7" class="empty-state"><p>Источники ещё не добавлены</p></td></tr>'
+            ? `<tr><td colspan="7" class="empty-state"><p>${t('empty_sources')}</p></td></tr>`
             : allSourcesData.map(s => {
                 let statusHtml;
                 if (s.last_check == null) {
-                    statusHtml = '<span class="status-dot unknown"></span>Не проверен';
+                    statusHtml = `<span class="status-dot unknown"></span>${t('source_not_checked')}`;
                 } else if (s.is_alive) {
-                    const msText = s.response_time_ms ? ` (${Math.round(s.response_time_ms)}мс)` : '';
-                    statusHtml = `<span class="status-dot alive"></span>Доступен${msText}`;
+                    const msText = s.response_time_ms ? ` (${Math.round(s.response_time_ms)}ms)` : '';
+                    statusHtml = `<span class="status-dot alive"></span>${t('source_available')}${msText}`;
                 } else {
-                    statusHtml = `<span class="status-dot dead"></span>Недоступен`;
+                    statusHtml = `<span class="status-dot dead"></span>${t('source_unavailable')}`;
                 }
                 return `<tr>
                     <td><strong>${esc(s.name)}</strong></td>
@@ -728,14 +751,14 @@
                     <td>${s.last_check ? fmtDate(s.last_check) : '-'}</td>
                     <td><label class="toggle"><input type="checkbox" ${s.enabled ? 'checked' : ''} onchange="toggleSource(${s.id}, this.checked)"><span class="slider"></span></label></td>
                     <td>
-                        <button class="btn btn-secondary btn-small" onclick="editSource(${s.id})" title="Редактировать">✏️</button>
-                        <button class="btn btn-danger btn-small" onclick="deleteSource(${s.id})" title="Удалить">🗑️</button>
+                        <button class="btn btn-secondary btn-small" onclick="editSource(${s.id})" title="${t('edit_source')}">✏️</button>
+                        <button class="btn btn-danger btn-small" onclick="deleteSource(${s.id})" title="${t('btn_delete')}">🗑️</button>
                     </td>
                 </tr>`;
             }).join('');
         const sel = document.getElementById('ch-source-filter');
         const cur = sel.value;
-        sel.innerHTML = '<option value="">Все источники</option>' + allSourcesData.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
+        sel.innerHTML = `<option value="">${t('all_sources')}</option>` + allSourcesData.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
         sel.value = cur;
     }
 
@@ -744,17 +767,17 @@
     async function loadEPGSources() {
         allEPGSourcesData = await api('/api/epg-sources');
         document.getElementById('epg-sources-list').innerHTML = allEPGSourcesData.length === 0
-            ? '<tr><td colspan="7" class="empty-state"><p>EPG источники ещё не добавлены</p></td></tr>'
+            ? `<tr><td colspan="7" class="empty-state"><p>${t('empty_epg_sources')}</p></td></tr>`
             : allEPGSourcesData.map(s => {
                 let statusHtml;
                 if (s.last_check == null) {
-                    statusHtml = '<span class="status-dot unknown"></span>Не проверен';
+                    statusHtml = `<span class="status-dot unknown"></span>${t('source_not_checked')}`;
                 } else if (s.is_alive) {
-                    const msText = s.response_time_ms ? ` (${Math.round(s.response_time_ms)}мс)` : '';
-                    statusHtml = `<span class="status-dot alive"></span>Доступен${msText}`;
+                    const msText = s.response_time_ms ? ` (${Math.round(s.response_time_ms)}ms)` : '';
+                    statusHtml = `<span class="status-dot alive"></span>${t('source_available')}${msText}`;
                 } else {
                     const errText = s.error_message ? ` — ${esc(s.error_message.substring(0, 60))}` : '';
-                    statusHtml = `<span class="status-dot dead"></span>Недоступен${errText}`;
+                    statusHtml = `<span class="status-dot dead"></span>${t('source_unavailable')}${errText}`;
                 }
                 return `<tr>
                     <td><strong>${esc(s.name)}</strong></td>
@@ -764,8 +787,8 @@
                     <td>${s.channel_count || 0}</td>
                     <td>${s.last_download ? fmtDate(s.last_download) : 'Никогда'}</td>
                     <td>
-                        <button class="btn btn-secondary btn-small" onclick="editEPGSource(${s.id})" title="Редактировать">✏️</button>
-                        <button class="btn btn-danger btn-small" onclick="deleteEPGSource(${s.id})" title="Удалить">🗑️</button>
+                        <button class="btn btn-secondary btn-small" onclick="editEPGSource(${s.id})" title="${t('edit_epg_source')}">✏️</button>
+                        <button class="btn btn-danger btn-small" onclick="deleteEPGSource(${s.id})" title="${t('btn_delete')}">🗑️</button>
                     </td>
                 </tr>`;
             }).join('');
@@ -775,13 +798,13 @@
         document.getElementById('epg-source-modal').classList.add('show');
         if (id) {
             const s = allEPGSourcesData.find(x => x.id === id);
-            document.getElementById('epg-modal-title').textContent = 'Редактировать EPG источник';
+            document.getElementById('epg-modal-title').textContent = t('edit_epg_source');
             document.getElementById('epg-src-edit-id').value = id;
             document.getElementById('epg-src-name').value = s.name;
             document.getElementById('epg-src-url').value = s.url;
             document.getElementById('epg-src-enabled').checked = s.enabled;
         } else {
-            document.getElementById('epg-modal-title').textContent = 'Добавить EPG источник';
+            document.getElementById('epg-modal-title').textContent = t('add_epg_source');
             document.getElementById('epg-src-edit-id').value = '';
             document.getElementById('epg-src-name').value = '';
             document.getElementById('epg-src-url').value = '';
@@ -794,25 +817,25 @@
     async function saveEPGSource() {
         const id = document.getElementById('epg-src-edit-id').value;
         const data = { name: document.getElementById('epg-src-name').value, url: document.getElementById('epg-src-url').value, enabled: document.getElementById('epg-src-enabled').checked };
-        if (!data.name || !data.url) { toast('Укажите название и URL', 'error'); return; }
+        if (!data.name || !data.url) { toast(t('toast_name_url_required'), 'error'); return; }
         try {
             if (id) {
                 await api(`/api/epg-sources/${id}`, { method: 'PUT', body: JSON.stringify(data) });
             } else {
                 const btn = document.querySelector('#epg-source-modal .btn:not(.btn-secondary)');
-                if (btn) { btn.disabled = true; btn.textContent = 'Проверка...'; }
+                if (btn) { btn.disabled = true; btn.textContent = t('checking'); }
                 const res = await api('/api/epg-sources', { method: 'POST', body: JSON.stringify(data) });
-                if (btn) { btn.disabled = false; btn.textContent = 'Сохранить'; }
+                if (btn) { btn.disabled = false; btn.textContent = t('btn_save'); }
                 if (res.channels_found !== undefined) {
-                    toast(`EPG источник добавлен: ${res.channels_found} каналов`);
+                    toast(`${t('toast_epg_added')}: ${res.channels_found} ${t('channels_word')}`);
                 }
             }
             closeEPGSourceModal();
-            if (id) toast('EPG источник обновлён');
+            if (id) toast(t('toast_epg_updated'));
             loadEPGSources();
         } catch(e) {
             const btn = document.querySelector('#epg-source-modal .btn:not(.btn-secondary)');
-            if (btn) { btn.disabled = false; btn.textContent = 'Сохранить'; }
+            if (btn) { btn.disabled = false; btn.textContent = t('btn_save'); }
             const msg = e.json ? (await e.json()).detail : 'Ошибка сохранения';
             toast(msg, 'error');
         }
@@ -821,15 +844,15 @@
     function editEPGSource(id) { showEPGSourceModal(id); }
 
     async function deleteEPGSource(id) {
-        if (!confirm('Удалить EPG источник?')) return;
+        if (!confirm(t('confirm_delete_epg'))) return;
         await api(`/api/epg-sources/${id}`, { method: 'DELETE' });
-        toast('EPG источник удалён');
+        toast(t('toast_epg_deleted'));
         loadEPGSources();
     }
 
     async function toggleEPGSource(id, enabled) {
         await api(`/api/epg-sources/${id}`, { method: 'PUT', body: JSON.stringify({ enabled }) });
-        toast(enabled ? 'EPG источник включён' : 'EPG источник отключён');
+        toast(enabled ? t('toast_epg_enabled') : t('toast_epg_disabled'));
     }
 
     async function loadAllChannels() {
@@ -837,7 +860,7 @@
         const groups = [...new Set(allChannelsData.map(c => c.group_title))].sort();
         const sel = document.getElementById('ch-group-filter');
         const curGrp = sel.value;
-        sel.innerHTML = '<option value="">Все группы</option>' + groups.map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
+        sel.innerHTML = `<option value="">${t('all_groups')}</option>` + groups.map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
         sel.value = curGrp;
         renderChannels();
     }
@@ -861,9 +884,9 @@
         });
         filtered = sortArray(filtered, chSortKey, chSortAsc);
         document.getElementById('all-channels').innerHTML = filtered.length === 0
-            ? '<tr><td colspan="7" class="empty-state"><p>Каналы не найдены</p></td></tr>'
+            ? `<tr><td colspan="7" class="empty-state"><p>${t('empty_channels')}</p></td></tr>`
             : filtered.map(c => chRow(c, true)).join('');
-        document.getElementById('channels-count').textContent = `Показано: ${filtered.length} из ${allChannelsData.length}`;
+        document.getElementById('channels-count').textContent = `${t('channels_shown')}: ${filtered.length} ${t('channels_of')} ${allChannelsData.length}`;
         updateSortIndicators('panel-channels', chSortKey, chSortAsc);
     }
 
@@ -877,13 +900,13 @@
         document.getElementById('source-modal').classList.add('show');
         if (id) {
             const s = allSourcesData.find(x => x.id === id);
-            document.getElementById('modal-title').textContent = 'Редактировать источник';
+            document.getElementById('modal-title').textContent = t('edit_source');
             document.getElementById('src-edit-id').value = id;
             document.getElementById('src-name').value = s.name;
             document.getElementById('src-url').value = s.url;
             document.getElementById('src-enabled').checked = s.enabled;
         } else {
-            document.getElementById('modal-title').textContent = 'Добавить источник';
+            document.getElementById('modal-title').textContent = t('add_source');
             document.getElementById('src-edit-id').value = '';
             document.getElementById('src-name').value = '';
             document.getElementById('src-url').value = '';
@@ -896,29 +919,29 @@
     async function saveSource() {
         const id = document.getElementById('src-edit-id').value;
         const data = { name: document.getElementById('src-name').value, url: document.getElementById('src-url').value, enabled: document.getElementById('src-enabled').checked };
-        if (!data.name || !data.url) { toast('Укажите название и URL', 'error'); return; }
+        if (!data.name || !data.url) { toast(t('toast_name_url_required'), 'error'); return; }
         if (id) {
             await api(`/api/sources/${id}`, { method: 'PUT', body: JSON.stringify(data) });
         } else {
             await api('/api/sources', { method: 'POST', body: JSON.stringify(data) });
         }
         closeSourceModal();
-        toast(id ? 'Источник обновлён' : 'Источник добавлен');
+        toast(id ? t('toast_source_updated') : t('toast_source_added'));
         loadSources();
     }
 
     function editSource(id) { showSourceModal(id); }
 
     async function deleteSource(id) {
-        if (!confirm('Удалить источник и все его каналы?')) return;
+        if (!confirm(t('confirm_delete_source'))) return;
         await api(`/api/sources/${id}`, { method: 'DELETE' });
-        toast('Источник удалён');
+        toast(t('toast_source_deleted'));
         loadSources();
     }
 
     async function toggleSource(id, enabled) {
         await api(`/api/sources/${id}`, { method: 'PUT', body: JSON.stringify({ enabled }) });
-        toast(enabled ? 'Источник включён' : 'Источник отключён');
+        toast(enabled ? t('toast_source_enabled') : t('toast_source_disabled'));
     }
 
     async function loadSettings() {
@@ -935,9 +958,9 @@
         document.getElementById('set-min-availability').value = s.min_availability;
         document.getElementById('set-epg-interval').value = s.epg_update_interval;
         document.getElementById('set-availability-period').value = s.availability_period_days;
-        let html = `<p style="margin-bottom:6px;">Статус: <strong>${status.in_progress ? 'Проверка...' : 'Ожидание'}</strong></p>`;
-        if (status.last_check) html += `<p style="font-size:12px;color:var(--text-muted);">Последняя: ${fmtDate(status.last_check)}</p>`;
-        if (status.next_check) html += `<p style="font-size:12px;color:var(--text-muted);">Следующая: ${fmtDate(status.next_check)}</p>`;
+        let html = `<p style="margin-bottom:6px;">${t('col_status')}: <strong>${status.in_progress ? t('checking') : t('status_waiting')}</strong></p>`;
+        if (status.last_check) html += `<p style="font-size:12px;color:var(--text-muted);">${t('last')}: ${fmtDate(status.last_check)}</p>`;
+        if (status.next_check) html += `<p style="font-size:12px;color:var(--text-muted);">${t('next')}: ${fmtDate(status.next_check)}</p>`;
         document.getElementById('scheduler-status').innerHTML = html;
     }
 
@@ -949,7 +972,7 @@
             epg_update_interval: parseInt(document.getElementById('set-epg-interval').value),
             availability_period_days: parseInt(document.getElementById('set-availability-period').value),
         })});
-        toast('Настройки сохранены');
+        toast(t('toast_settings_saved'));
     }
 
     async function savePlaylistSettings() {
@@ -962,14 +985,14 @@
         })});
         const res = await api('/api/playlist/generate', { method: 'POST' });
         document.getElementById('playlist-count').textContent = res.channel_count;
-        toast('Правила сохранены, плейлист обновлён: ' + res.channel_count + ' каналов');
+        toast(t('toast_rules_saved') + ': ' + res.channel_count + ' ' + t('channels_word'));
     }
 
     async function saveAuthSettings() {
         const password = document.getElementById('set-password').value;
         const passwordRepeat = document.getElementById('set-password-repeat').value;
         if (password !== passwordRepeat) {
-            toast('Пароли не совпадают', 'error');
+            toast(t('toast_passwords_mismatch'), 'error');
             return;
         }
         await api('/api/settings', { method: 'PUT', body: JSON.stringify({
@@ -978,7 +1001,7 @@
         })});
         document.getElementById('set-password').value = '';
         document.getElementById('set-password-repeat').value = '';
-        toast('Авторизация сохранена');
+        toast(t('toast_auth_saved'));
     }
 
     function onPlaylistAllChange(checked) {
@@ -1016,10 +1039,10 @@
     async function loadAccessStats() {
         const stats = await api('/api/access/stats');
         document.getElementById('access-stats').innerHTML = `
-            <div class="stat-card"><div class="value">${stats.total}</div><div class="label">Всего запросов</div></div>
-            <div class="stat-card green"><div class="value">${stats.playlist}</div><div class="label">Плейлист</div></div>
-            <div class="stat-card yellow"><div class="value">${stats.epg}</div><div class="label">ТВ-программа</div></div>
-            <div class="stat-card"><div class="value">${stats.unique_ips}</div><div class="label">Уникальных IP</div></div>
+            <div class="stat-card"><div class="value">${stats.total}</div><div class="label">${t('total_requests')}</div></div>
+            <div class="stat-card green"><div class="value">${stats.playlist}</div><div class="label">${t('filter_playlists')}</div></div>
+            <div class="stat-card yellow"><div class="value">${stats.epg}</div><div class="label">${t('filter_epg')}</div></div>
+            <div class="stat-card"><div class="value">${stats.unique_ips}</div><div class="label">${t('unique_ips')}</div></div>
         `;
     }
 
@@ -1034,7 +1057,7 @@
         const data = await api(url);
         const log = data.items;
         document.getElementById('access-log').innerHTML = log.length === 0
-            ? '<tr><td colspan="4" class="empty-state"><p>Нет записей</p></td></tr>'
+            ? `<tr><td colspan="4" class="empty-state"><p>${t('no_records')}</p></td></tr>`
             : log.map(l => `<tr>
                 <td>${fmtDate(l.timestamp)}</td>
                 <td><span class="group-badge">${esc(l.endpoint)}</span></td>
@@ -1043,7 +1066,7 @@
             </tr>`).join('');
         const totalPages = Math.ceil(data.total / accessLimit);
         const curPage = Math.floor(accessOffset / accessLimit) + 1;
-        document.getElementById('access-info').textContent = `Показано ${log.length} из ${data.total} (стр. ${curPage}/${totalPages || 1})`;
+        document.getElementById('access-info').textContent = `${t('showing')} ${log.length} ${t('channels_of')} ${data.total} (${t('page')} ${curPage}/${totalPages || 1})`;
         document.getElementById('access-prev').disabled = accessOffset === 0;
         document.getElementById('access-next').disabled = accessOffset + accessLimit >= data.total;
     }

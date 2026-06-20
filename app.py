@@ -8,6 +8,7 @@ import threading
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends, Response, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import database as db
 import checker_core as checker
@@ -49,7 +50,7 @@ def run_check_background():
         print("[scheduler] Check already in progress, skipping")
         return
     check_in_progress = True
-    check_progress = {"current": 0, "total": 0, "stage": "Начало проверки"}
+    check_progress = {"current": 0, "total": 0, "stage": "Starting check"}
     try:
         print("[scheduler] Starting check...")
 
@@ -59,9 +60,9 @@ def run_check_background():
 
         checker.run_check(progress_callback=update_progress)
         last_check_time = time.time()
-        check_progress = {"current": 1, "total": 1, "stage": "Генерация плейлиста"}
+        check_progress = {"current": 1, "total": 1, "stage": "Generating playlist"}
         generate_playlist_file()
-        check_progress = {"current": 1, "total": 1, "stage": "Обновление ТВ-программы"}
+        check_progress = {"current": 1, "total": 1, "stage": "Updating TV Guide"}
         try:
             global epg_channel_count
             epg_channel_count = epg_module.update_epg() or 0
@@ -97,6 +98,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="TANgle - IPTV Checker", lifespan=lifespan)
+
+STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 class SourceCreate(BaseModel):

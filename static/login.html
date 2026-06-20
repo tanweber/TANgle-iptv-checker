@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TANgle - Вход</title>
+    <title>TANgle - Login</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f1117; color: #e1e4e8; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
@@ -16,25 +16,51 @@
         .btn { width: 100%; background: #238636; color: #fff; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: 600; }
         .btn:hover { background: #2ea043; }
         .error { background: #da363320; border: 1px solid #da3633; color: #f85149; padding: 10px; border-radius: 6px; margin-bottom: 16px; font-size: 14px; text-align: center; display: none; }
+        .lang-switch { position: absolute; top: 16px; right: 16px; display: flex; gap: 4px; }
+        .lang-btn { background: #21262d; border: 1px solid #30363d; color: #8b949e; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        .lang-btn.active { background: #1f6feb; color: #fff; border-color: #1f6feb; }
     </style>
 </head>
 <body>
+    <div class="lang-switch">
+        <button class="lang-btn active" onclick="setLoginLang('en')">EN</button>
+        <button class="lang-btn" onclick="setLoginLang('ru')">RU</button>
+    </div>
     <div class="login-box">
         <h1>TANgle<br><span style="font-size:12px;color:#8b949e;font-weight:400;">IPTV checker</span></h1>
-        <div class="error" id="error-msg">Неверный логин или пароль</div>
+        <div class="error" id="error-msg">Invalid login or password</div>
         <form onsubmit="doLogin(event)">
             <div class="form-group">
-                <label>Логин</label>
+                <label id="lbl-login">Login</label>
                 <input type="text" id="login" autocomplete="username" required>
             </div>
             <div class="form-group">
-                <label>Пароль</label>
+                <label id="lbl-password">Password</label>
                 <input type="password" id="password" autocomplete="current-password" required>
             </div>
-            <button type="submit" class="btn">Войти</button>
+            <button type="submit" class="btn" id="btn-submit">Sign in</button>
         </form>
     </div>
     <script>
+    const loginTranslations = {
+        ru: { login: 'Логин', password: 'Пароль', submit: 'Войти', error: 'Неверный логин или пароль' },
+        en: { login: 'Login', password: 'Password', submit: 'Sign in', error: 'Invalid login or password' }
+    };
+
+    function setLoginLang(lang) {
+        localStorage.setItem('lang', lang);
+        const tr = loginTranslations[lang];
+        document.getElementById('lbl-login').textContent = tr.login;
+        document.getElementById('lbl-password').textContent = tr.password;
+        document.getElementById('btn-submit').textContent = tr.submit;
+        document.getElementById('error-msg').textContent = tr.error;
+        document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+    }
+
+    const savedLang = localStorage.getItem('lang') || 'en';
+    if (savedLang === 'ru') setLoginLang('ru');
+
     async function doLogin(e) {
         e.preventDefault();
         document.getElementById('error-msg').style.display = 'none';

@@ -115,11 +115,11 @@ def run_check(progress_callback=None):
     parallel = int(db.get_setting("check_parallel", "50"))
 
     if progress_callback:
-        progress_callback(0, len(sources), "Загрузка источников")
+        progress_callback(0, len(sources), "Loading sources")
 
     for i, source in enumerate(sources):
         if progress_callback:
-            progress_callback(i, len(sources), f"Источник: {source['name']}")
+            progress_callback(i, len(sources), f"Source: {source['name']}")
         start = time.monotonic()
         try:
             text = fetch_source(source["url"])
@@ -141,7 +141,7 @@ def run_check(progress_callback=None):
     all_channels = db.get_channels()
     if not all_channels:
         if progress_callback:
-            progress_callback(1, 1, "Нет каналов")
+            progress_callback(1, 1, "No channels")
         return
 
     session = requests.Session()
@@ -152,7 +152,7 @@ def run_check(progress_callback=None):
     print(f"[checker] Checking {total} channels ({parallel} workers, timeout={timeout}s)...")
 
     if progress_callback:
-        progress_callback(0, total, "Проверка каналов")
+        progress_callback(0, total, "Checking channels")
 
     checked = [0]
     lock = __import__('threading').Lock()
@@ -162,7 +162,7 @@ def run_check(progress_callback=None):
         with lock:
             checked[0] += 1
             if progress_callback:
-                progress_callback(checked[0], total, "Проверка каналов")
+                progress_callback(checked[0], total, "Checking channels")
         return (ch["id"], alive, ms)
 
     with ThreadPoolExecutor(max_workers=parallel) as executor:
