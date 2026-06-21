@@ -356,6 +356,18 @@ async def list_channels(source_id: int | None = None, alive: bool | None = None)
     return db.get_channels(source_id=source_id, alive_only=(alive is True))
 
 
+@app.put("/api/channels/{channel_id}/toggle")
+async def toggle_channel(channel_id: int, enabled: bool):
+    db.toggle_channel(channel_id, enabled)
+    return {"ok": True}
+
+
+@app.put("/api/channels/{channel_id}/group")
+async def update_channel_group(channel_id: int, group_title: str):
+    db.update_channel_group(channel_id, group_title)
+    return {"ok": True}
+
+
 @app.get("/api/debug/headers")
 async def debug_headers(request: Request):
     headers = dict(request.headers)
@@ -366,13 +378,19 @@ async def debug_headers(request: Request):
 
 
 @app.get("/api/access/stats")
-async def access_stats():
-    return db.get_access_stats()
+async def access_stats(date_from: str | None = None, date_to: str | None = None):
+    return db.get_access_stats(date_from=date_from, date_to=date_to)
 
 
 @app.get("/api/access/log")
 async def access_log(endpoint: str | None = None, limit: int = 10, offset: int = 0, date_from: str | None = None, date_to: str | None = None):
     return db.get_access_log(endpoint=endpoint, limit=limit, offset=offset, date_from=date_from, date_to=date_to)
+
+
+@app.delete("/api/access/log")
+async def delete_access_log(date_from: str | None = None, date_to: str | None = None):
+    deleted = db.delete_access_log(date_from=date_from, date_to=date_to)
+    return {"ok": True, "deleted": deleted}
 
 
 @app.post("/api/check")
@@ -425,6 +443,8 @@ def generate_playlist_file():
 
     alive_channels = []
     for ch in channels:
+        if not ch.get("enabled", 1):
+            continue
         if not ch["is_alive"] or ch["last_check"] is None:
             continue
         ms = ch.get("response_time_ms")
@@ -445,6 +465,8 @@ def generate_playlist_file():
 
     by_name = {}
     for ch in alive_channels:
+        if not ch.get("enabled", 1):
+            continue
         key = normalize_channel_name(ch["name"])
         ms = ch.get("response_time_ms") or 99999
         if key not in by_name or ms < (by_name[key].get("response_time_ms") or 99999):
@@ -454,7 +476,12 @@ def generate_playlist_file():
 
     lines = [f'#EXTM3U x-tvg-url="{EPG_SERVE_URL}" url-tvg="{PLAYLIST_SERVE_URL}"\n']
     for ch in unique:
-        inf = ch["inf_line"] if ch["inf_line"] else f'#EXTINF:-1 group-title="{ch["group_title"]}",{ch["name"]}'
+        if ch["inf_line"]:
+            inf = re.sub(r'group-title="[^"]*"', f'group-title="{ch["group_title"]}"', ch["inf_line"])
+            if 'group-title' not in inf:
+                inf = inf.replace("#EXTINF:", f'#EXTINF: group-title="{ch["group_title"]}" ', 1)
+        else:
+            inf = f'#EXTINF:-1 group-title="{ch["group_title"]}",{ch["name"]}'
         inf = re.sub(r',[^,]*$', f',{ch["name"]}', inf)
         lines.append(f'{inf}\n{ch["url"]}\n')
 

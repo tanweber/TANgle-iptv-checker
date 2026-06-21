@@ -269,6 +269,7 @@
                         <th onclick="sortChannels('availability')"><span data-t="col_availability">Доступность</span> <span class="sort-arrow">▲</span></th>
                         <th onclick="sortChannels('last_check')"><span data-t="col_last_check">Проверен</span> <span class="sort-arrow">▲</span></th>
                         <th onclick="sortChannels('url')"><span data-t="col_url">URL</span> <span class="sort-arrow">▲</span></th>
+                        <th data-t="col_actions">Действия</th>
                     </tr></thead>
                     <tbody id="all-channels"></tbody>
                 </table>
@@ -410,8 +411,8 @@
                     <option value="playlist" data-t="filter_playlists">Плейлист</option>
                     <option value="epg" data-t="filter_epg">ТВ-программа</option>
                 </select>
-                <input type="date" id="access-date-from" onchange="loadAccessLog()">
-                <input type="date" id="access-date-to" onchange="loadAccessLog()">
+                <input type="date" id="access-date-from" onchange="onAccessDateChange()">
+                <input type="date" id="access-date-to" onchange="onAccessDateChange()">
             </div>
             <div class="table-scroll">
                 <table>
@@ -425,11 +426,31 @@
                 </table>
             </div>
             <div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;">
+                <button class="btn btn-danger btn-small" onclick="deleteAccessLogs()" data-t="delete_selected">Удалить выбранное</button>
                 <span id="access-info" style="font-size:12px;color:var(--text-muted);"></span>
                 <div style="display:flex;gap:6px;">
                     <button class="btn btn-secondary btn-small" id="access-prev" onclick="accessPage(-1)" disabled data-t="btn_prev">← Назад</button>
                     <button class="btn btn-secondary btn-small" id="access-next" onclick="accessPage(1)" disabled data-t="btn_next">Вперёд →</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="channel-modal">
+        <div class="modal">
+            <h3 id="channel-modal-title" data-t="edit_channel">Редактировать канал</h3>
+            <input type="hidden" id="ch-edit-id">
+            <div class="form-group">
+                <label data-t="channel_name">Название канала</label>
+                <input type="text" id="ch-edit-name" readonly style="opacity:0.7;cursor:not-allowed;">
+            </div>
+            <div class="form-group">
+                <label data-t="channel_group">Группа канала</label>
+                <input type="text" id="ch-edit-group" data-t-placeholder="channel_group_placeholder" placeholder="Например: Новости, Кино, Музыка">
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-secondary" onclick="closeChannelModal()" data-t="btn_cancel">Отмена</button>
+                <button class="btn" onclick="saveChannelGroup()" data-t="btn_save">Сохранить</button>
             </div>
         </div>
     </div>
@@ -666,15 +687,20 @@
             const cls = pct >= 90 ? 'fast' : pct >= 50 ? 'medium' : 'slow';
             availPct = `<span class="response-time ${cls}">${pct}%</span>`;
         }
-        return `<tr>
+        const enabled = ch.enabled !== undefined ? ch.enabled : 1;
+        const safeName = esc(ch.name).replace(/'/g, "\\'");
+        const safeGroup = esc(ch.group_title).replace(/'/g, "\\'");
+        const editOnClick = `showChannelModal(${ch.id}, '${safeName}', '${safeGroup}')`;
+        return `<tr style="cursor:pointer;" onclick="${editOnClick}">
             <td>${statusDot(ch)} ${statusText(ch)}</td>
-            <td><strong>${esc(ch.name)}</strong></td>
-            <td><span class="group-badge">${esc(ch.group_title)}</span></td>
+            <td><label class="toggle" style="margin-right:6px;" onclick="event.stopPropagation()"><input type="checkbox" ${enabled ? 'checked' : ''} onchange="toggleChannel(${ch.id}, this.checked)"><span class="slider"></span></label><strong>${safeName}</strong></td>
+            <td><span class="group-badge" style="cursor:pointer;">${safeGroup}</span></td>
             <td>${esc(ch.source_name || '')}</td>
             <td>${fmtTime(ch.response_time_ms)}</td>
             <td>${availPct}</td>
             ${showLastCheck ? '<td>' + fmtDate(ch.last_check) + '</td>' : ''}
             <td class="url-cell" title="${esc(ch.url)}">${esc(urlDisplay)}</td>
+            <td><span style="cursor:pointer;font-size:14px;" onclick="event.stopPropagation();${editOnClick}">✏️</span></td>
         </tr>`;
     }
 
@@ -920,14 +946,26 @@
         const id = document.getElementById('src-edit-id').value;
         const data = { name: document.getElementById('src-name').value, url: document.getElementById('src-url').value, enabled: document.getElementById('src-enabled').checked };
         if (!data.name || !data.url) { toast(t('toast_name_url_required'), 'error'); return; }
-        if (id) {
-            await api(`/api/sources/${id}`, { method: 'PUT', body: JSON.stringify(data) });
-        } else {
-            await api('/api/sources', { method: 'POST', body: JSON.stringify(data) });
+        const btn = document.querySelector('#source-modal .btn:not(.btn-secondary)');
+        if (btn) { btn.disabled = true; btn.textContent = t('checking'); }
+        try {
+            if (id) {
+                await api(`/api/sources/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+            } else {
+                const res = await api('/api/sources', { method: 'POST', body: JSON.stringify(data) });
+                if (res.channels_found !== undefined) {
+                    toast(`${t('toast_source_added')}: ${res.channels_found} ${t('channels_word')}`);
+                }
+            }
+            closeSourceModal();
+            if (!id) toast(t('toast_source_added'));
+            loadSources();
+        } catch(e) {
+            const msg = e.json ? (await e.json()).detail : e.message;
+            toast(msg || t('toast_error'), 'error');
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = t('btn_save'); }
         }
-        closeSourceModal();
-        toast(id ? t('toast_source_updated') : t('toast_source_added'));
-        loadSources();
     }
 
     function editSource(id) { showSourceModal(id); }
@@ -1046,10 +1084,37 @@
         `;
     }
 
-    async function loadAccessLog() {
-        const endpoint = document.getElementById('access-filter').value;
+    async function loadAccessStatsForPeriod(dateFrom, dateTo) {
+        let url = '/api/access/stats';
+        const params = [];
+        if (dateFrom) params.push(`date_from=${dateFrom}`);
+        if (dateTo) params.push(`date_to=${dateTo}`);
+        if (params.length) url += '?' + params.join('&');
+        const stats = await api(url);
+        document.getElementById('access-stats').innerHTML = `
+            <div class="stat-card"><div class="value">${stats.total}</div><div class="label">${t('total_requests')}</div></div>
+            <div class="stat-card green"><div class="value">${stats.playlist}</div><div class="label">${t('filter_playlists')}</div></div>
+            <div class="stat-card yellow"><div class="value">${stats.epg}</div><div class="label">${t('filter_epg')}</div></div>
+            <div class="stat-card"><div class="value">${stats.unique_ips}</div><div class="label">${t('unique_ips')}</div></div>
+        `;
+    }
+
+    async function onAccessDateChange() {
         const dateFrom = document.getElementById('access-date-from').value;
         const dateTo = document.getElementById('access-date-to').value;
+        accessOffset = 0;
+        await loadAccessLog();
+        if (dateFrom || dateTo) {
+            await loadAccessStatsForPeriod(dateFrom, dateTo);
+        } else {
+            await loadAccessStats();
+        }
+    }
+
+    async function loadAccessLog(dateFromParam, dateToParam) {
+        const endpoint = document.getElementById('access-filter').value;
+        const dateFrom = dateFromParam || document.getElementById('access-date-from').value;
+        const dateTo = dateToParam || document.getElementById('access-date-to').value;
         let url = `/api/access/log?limit=${accessLimit}&offset=${accessOffset}`;
         if (endpoint) url += `&endpoint=${endpoint}`;
         if (dateFrom) url += `&date_from=${dateFrom}`;
@@ -1071,9 +1136,66 @@
         document.getElementById('access-next').disabled = accessOffset + accessLimit >= data.total;
     }
 
+    async function toggleChannel(id, enabled) {
+        await api(`/api/channels/${id}/toggle?enabled=${enabled}`, { method: 'PUT' });
+        const ch = allChannelsData.find(c => c.id === id);
+        if (ch) ch.enabled = enabled ? 1 : 0;
+    }
+
+    function showChannelModal(id, name, group) {
+        document.getElementById('channel-modal').classList.add('show');
+        document.getElementById('ch-edit-id').value = id;
+        document.getElementById('ch-edit-name').value = name;
+        document.getElementById('ch-edit-group').value = group;
+    }
+
+    function closeChannelModal() {
+        document.getElementById('channel-modal').classList.remove('show');
+    }
+
+    async function saveChannelGroup() {
+        const id = document.getElementById('ch-edit-id').value;
+        const group = document.getElementById('ch-edit-group').value;
+        if (!group) { toast(t('toast_name_url_required'), 'error'); return; }
+        try {
+            await api(`/api/channels/${id}/group?group_title=${encodeURIComponent(group)}`, { method: 'PUT' });
+            const ch = allChannelsData.find(c => c.id === parseInt(id));
+            if (ch) ch.group_title = group;
+            closeChannelModal();
+            toast(t('group_updated'));
+            rebuildGroupFilter();
+            renderChannels();
+        } catch(e) {
+            toast(t('toast_error'), 'error');
+        }
+    }
+
+    function rebuildGroupFilter() {
+        const groups = [...new Set(allChannelsData.map(c => c.group_title))].sort();
+        const sel = document.getElementById('ch-group-filter');
+        const curGrp = sel.value;
+        sel.innerHTML = `<option value="">${t('all_groups')}</option>` + groups.map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
+        sel.value = curGrp;
+    }
+
     function accessPage(dir) {
         accessOffset = Math.max(0, accessOffset + dir * accessLimit);
         loadAccessLog();
+    }
+
+    async function deleteAccessLogs() {
+        const dateFrom = document.getElementById('access-date-from').value;
+        const dateTo = document.getElementById('access-date-to').value;
+        if (!dateFrom && !dateTo) { toast('Укажите даты для удаления', 'error'); return; }
+        if (!confirm(`${t('delete_selected')}${dateFrom ? ' ' + t('period_from') + ' ' + dateFrom : ''}${dateTo ? ' ' + t('period_to') + ' ' + dateTo : ''}?`)) return;
+        let url = '/api/access/log?';
+        if (dateFrom) url += `date_from=${dateFrom}`;
+        if (dateTo) url += `&date_to=${dateTo}`;
+        const res = await api(url, { method: 'DELETE' });
+        toast(`${t('delete_selected')}: ${res.deleted}`);
+        accessOffset = 0;
+        loadAccessLog(dateFrom, dateTo);
+        loadAccessStatsForPeriod(dateFrom, dateTo);
     }
 
     async function logout() {

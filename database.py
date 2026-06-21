@@ -2,6 +2,8 @@
 import sqlite3
 import time
 import os
+import re
+from datetime import datetime
 from contextlib import contextmanager
 
 DB_PATH = os.environ.get("DB_PATH", "/data/iptv.db")
@@ -31,6 +33,7 @@ def init_db():
                 url TEXT NOT NULL,
                 inf_line TEXT,
                 group_title TEXT DEFAULT 'Другое',
+                enabled INTEGER DEFAULT 1,
                 last_check REAL,
                 is_alive INTEGER DEFAULT 0,
                 response_time_ms REAL,
@@ -80,6 +83,8 @@ def init_db():
             conn.execute("ALTER TABLE channels ADD COLUMN total_checks INTEGER DEFAULT 0")
         if "alive_checks" not in ch_cols:
             conn.execute("ALTER TABLE channels ADD COLUMN alive_checks INTEGER DEFAULT 0")
+        if "enabled" not in ch_cols:
+            conn.execute("ALTER TABLE channels ADD COLUMN enabled INTEGER DEFAULT 1")
         src_cols = [r[1] for r in conn.execute("PRAGMA table_info(sources)").fetchall()]
         if "is_alive" not in src_cols:
             conn.execute("ALTER TABLE sources ADD COLUMN is_alive INTEGER DEFAULT 0")
@@ -196,8 +201,8 @@ def upsert_channel(source_id, name, url, inf_line, group_title):
         ).fetchone()
         if existing:
             conn.execute(
-                "UPDATE channels SET name=?, inf_line=?, group_title=? WHERE id=?",
-                (name, inf_line, group_title, existing["id"]),
+                "UPDATE channels SET name=?, inf_line=? WHERE id=?",
+                (name, inf_line, existing["id"]),
             )
             return existing["id"]
         else:
@@ -215,6 +220,22 @@ def update_channel_status(channel_id, is_alive, response_time_ms=None):
             "UPDATE channels SET is_alive=?, response_time_ms=?, last_check=?, total_checks=total_checks+1, alive_checks=alive_checks+? WHERE id=?",
             (alive_val, response_time_ms, time.time(), alive_val, channel_id),
         )
+
+
+def toggle_channel(channel_id, enabled):
+    with get_conn() as conn:
+        conn.execute("UPDATE channels SET enabled=? WHERE id=?", (1 if enabled else 0, channel_id))
+
+
+def update_channel_group(channel_id, group_title):
+    with get_conn() as conn:
+        conn.execute("UPDATE channels SET group_title=? WHERE id=?", (group_title, channel_id))
+        row = conn.execute("SELECT inf_line FROM channels WHERE id=?", (channel_id,)).fetchone()
+        if row and row["inf_line"]:
+            new_inf = re.sub(r'group-title="[^"]*"', f'group-title="{group_title}"', row["inf_line"])
+            if 'group-title' not in new_inf:
+                new_inf = new_inf.replace("#EXTINF:", f'#EXTINF: group-title="{group_title}" ', 1)
+            conn.execute("UPDATE channels SET inf_line=? WHERE id=?", (new_inf, channel_id))
 
 
 def delete_stale_channels(source_id, valid_urls):
@@ -356,15 +377,43 @@ def get_access_log(endpoint=None, limit=10, offset=0, date_from=None, date_to=No
         return {"items": [dict(r) for r in rows], "total": total}
 
 
-def get_access_stats():
+def get_access_stats(date_from=None, date_to=None):
     with get_conn() as conn:
-        total = conn.execute("SELECT COUNT(*) as cnt FROM access_log").fetchone()["cnt"]
-        playlist = conn.execute("SELECT COUNT(*) as cnt FROM access_log WHERE endpoint='playlist'").fetchone()["cnt"]
-        epg = conn.execute("SELECT COUNT(*) as cnt FROM access_log WHERE endpoint='epg'").fetchone()["cnt"]
-        unique_ips = conn.execute("SELECT COUNT(DISTINCT ip_address) as cnt FROM access_log").fetchone()["cnt"]
+        conditions = []
+        params = []
+        if date_from:
+            ts = datetime.strptime(date_from, "%Y-%m-%d").timestamp()
+            conditions.append("timestamp>=?")
+            params.append(ts)
+        if date_to:
+            ts = datetime.strptime(date_to, "%Y-%m-%d").timestamp() + 86400
+            conditions.append("timestamp<=?")
+            params.append(ts)
+        where = " WHERE " + " AND ".join(conditions) if conditions else ""
+        total = conn.execute(f"SELECT COUNT(*) as cnt FROM access_log{where}", params).fetchone()["cnt"]
+        playlist = conn.execute(f"SELECT COUNT(*) as cnt FROM access_log{where}{' AND' if where else ' WHERE '} endpoint='playlist'", params).fetchone()["cnt"]
+        epg = conn.execute(f"SELECT COUNT(*) as cnt FROM access_log{where}{' AND' if where else ' WHERE '} endpoint='epg'", params).fetchone()["cnt"]
+        unique_ips = conn.execute(f"SELECT COUNT(DISTINCT ip_address) as cnt FROM access_log{where}", params).fetchone()["cnt"]
         return {
             "total": total,
             "playlist": playlist,
             "epg": epg,
             "unique_ips": unique_ips,
         }
+
+
+def delete_access_log(date_from=None, date_to=None):
+    with get_conn() as conn:
+        conditions = []
+        params = []
+        if date_from:
+            ts = datetime.strptime(date_from, "%Y-%m-%d").timestamp()
+            conditions.append("timestamp>=?")
+            params.append(ts)
+        if date_to:
+            ts = datetime.strptime(date_to, "%Y-%m-%d").timestamp() + 86400
+            conditions.append("timestamp<=?")
+            params.append(ts)
+        where = " WHERE " + " AND ".join(conditions) if conditions else ""
+        result = conn.execute(f"DELETE FROM access_log{where}", params)
+        return result.rowcount
