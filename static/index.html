@@ -25,14 +25,6 @@
 .page-head h1{font-family:var(--font-display);font-size:30px;font-weight:600;letter-spacing:-.02em;line-height:1.15}
 .page-head p{color:var(--text-2);font-size:14px;margin-top:6px}
 
-/* ---------- Playlist info ---------- */
-.links{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
-.link-card{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg)}
-.link-icon{width:38px;height:38px;border-radius:10px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;flex-shrink:0}
-.link-body{min-width:0;flex:1}
-.link-label{font-size:12px;color:var(--text-2)}
-.link-url{font-size:14px;color:var(--text);text-decoration:none;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
-.link-url:hover{color:var(--accent)}
 .meta-row{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:13px;color:var(--text-2)}
 .meta-row strong{color:var(--text);font-weight:600}
 
@@ -147,7 +139,6 @@ td strong{font-weight:500}
     .stat-grid{grid-template-columns:repeat(2,1fr);gap:8px}
     .stat-card{padding:12px 14px}
     .stat-card .value{font-size:22px}
-    .links{grid-template-columns:1fr}
     .settings-grid{grid-template-columns:1fr}
     .table-scroll{max-height:none}
     .table-scroll table{min-width:760px}
@@ -169,7 +160,7 @@ td strong{font-weight:500}
                 <button class="active" onclick="showPanel('channels', this)" data-t="nav_channels">Каналы</button>
                 <button onclick="showPanel('sources', this)" data-t="nav_sources">Источники</button>
                 <button onclick="showPanel('settings', this)" data-t="nav_settings">Настройки</button>
-                <button onclick="showPanel('access', this)" data-t="nav_access">Подключения</button>
+                <button onclick="showPanel('users', this)" data-t="nav_users">Пользователи</button>
             </nav>
             <div class="actions">
                 <button class="btn btn-primary" onclick="downloadPlaylist()">
@@ -205,7 +196,6 @@ td strong{font-weight:500}
                 </div>
                 <button class="btn btn-primary" onclick="triggerCheck()" id="check-btn" data-t="btn_check">Проверить сейчас</button>
             </div>
-            <div class="links" id="playlist-address"></div>
             <div class="stat-grid" id="stats-grid"></div>
             <div class="card">
                 <div class="card-head">
@@ -324,38 +314,20 @@ td strong{font-weight:500}
             </div>
         </section>
 
-        <!-- Подключения -->
-        <section id="panel-access" class="panel">
-            <div class="page-head"><div><h1 data-t="nav_access">Подключения</h1><p data-t="access_sub">Кто и когда запрашивал плейлист и ТВ-программу</p></div></div>
-            <div class="stat-grid" id="access-stats"></div>
+        <!-- Пользователи -->
+        <section id="panel-users" class="panel">
+            <div class="page-head">
+                <div><h1 data-t="nav_users">Пользователи</h1><p data-t="users_sub">Персональные ссылки на плейлист и ТВ-программу</p></div>
+                <button class="btn btn-primary" onclick="showUserModal()" data-t="btn_add_user">Добавить пользователя</button>
+            </div>
             <div class="card">
-                <div class="card-head">
-                    <h2 data-t="access_stats">Статистика подключений</h2>
-                    <button class="btn btn-secondary btn-small" onclick="toggleFilters('access')" id="access-filter-toggle">Фильтры</button>
-                </div>
-                <div class="search-bar" id="access-filters" style="display:none;">
-                    <select id="access-filter" onchange="loadAccessLog()">
-                        <option value="" data-t="filter_all">Все</option>
-                        <option value="playlist" data-t="filter_playlists">Плейлист</option>
-                        <option value="epg" data-t="filter_epg">ТВ-программа</option>
-                    </select>
-                    <input type="date" id="access-date-from" onchange="onAccessDateChange()">
-                    <input type="date" id="access-date-to" onchange="onAccessDateChange()">
-                </div>
                 <div class="table-scroll">
                     <table>
-                        <thead><tr><th data-t="col_time">Время</th><th data-t="col_endpoint">Эндпоинт</th><th data-t="col_ip">IP адрес</th><th data-t="col_device">Устройство</th></tr></thead>
-                        <tbody id="access-log"></tbody>
+                        <thead><tr><th data-t="col_user">Пользователь</th><th data-t="col_links">Ссылки</th><th data-t="col_last_seen">Последнее подключение</th><th data-t="col_ip">IP адрес</th><th data-t="col_device">Устройство</th><th data-t="col_enabled">Активен</th><th></th></tr></thead>
+                        <tbody id="users-list"></tbody>
                     </table>
                 </div>
-                <div class="card-foot">
-                    <button class="btn btn-danger btn-small" onclick="deleteAccessLogs()" data-t="delete_selected">Удалить</button>
-                    <span id="access-info"></span>
-                    <div style="display:flex;gap:6px;">
-                        <button class="btn btn-secondary btn-small" id="access-prev" onclick="accessPage(-1)" disabled data-t="btn_prev">←</button>
-                        <button class="btn btn-secondary btn-small" id="access-next" onclick="accessPage(1)" disabled data-t="btn_next">→</button>
-                    </div>
-                </div>
+                <div class="card-foot"><span data-t="users_hint">Ссылка на программу уже указана внутри плейлиста — обычно пользователю достаточно дать только ссылку на плейлист.</span></div>
             </div>
         </section>
     </main>
@@ -397,6 +369,22 @@ td strong{font-weight:500}
             <div class="form-actions">
                 <button class="btn btn-secondary" onclick="closeEPGSourceModal()" data-t="btn_cancel">Отмена</button>
                 <button class="btn btn-primary" onclick="saveEPGSource()" data-t="btn_save">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="user-modal" onclick="if(event.target===this)closeUserModal()">
+        <div class="modal">
+            <h3 id="user-modal-title" data-t="add_user">Новый пользователь</h3>
+            <input type="hidden" id="user-edit-id">
+            <div class="form-group">
+                <label data-t="label_user_name">Имя</label>
+                <input type="text" id="user-name" data-t-placeholder="user_name_placeholder" placeholder="Например: Дача, Мама, ТВ в спальне" onkeydown="if(event.key==='Enter')saveUser()">
+                <span class="hint" data-t="user_name_hint">Только для вас — в ссылке будет случайный уникальный код</span>
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-secondary" onclick="closeUserModal()" data-t="btn_cancel">Отмена</button>
+                <button class="btn btn-primary" onclick="saveUser()" data-t="btn_save">Сохранить</button>
             </div>
         </div>
     </div>
@@ -447,7 +435,7 @@ td strong{font-weight:500}
         document.querySelectorAll('[data-t-title]').forEach(el => {
             el.title = t(el.getAttribute('data-t-title'));
         });
-        ['ch', 'access'].forEach(updateFilterButton);
+        updateFilterButton('ch');
         renderThemeMenu();
     }
 
@@ -473,7 +461,7 @@ td strong{font-weight:500}
         if (name === 'channels') { loadChannelsPanel(); }
         if (name === 'sources') { loadSources(); loadEPGSources(); }
         if (name === 'settings') loadSettings();
-        if (name === 'access') { loadAccessStats(); loadAccessLog(); }
+        if (name === 'users') loadUsers();
         applyTranslations();
     }
 
@@ -619,14 +607,6 @@ td strong{font-weight:500}
         </tr>`;
     }
 
-    function linkCard(label, url, icon) {
-        return `<div class="link-card">
-            <div class="link-icon">${icon}</div>
-            <div class="link-body"><div class="link-label">${label}</div><a class="link-url" href="${url}" target="_blank">${url}</a></div>
-            <button class="icon-btn" onclick="copyText('${url}')" title="${t('copy')}">${ICON_COPY}</button>
-        </div>`;
-    }
-
     async function copyText(text) {
         try { await navigator.clipboard.writeText(text); toast(t('copied')); }
         catch (e) {
@@ -640,15 +620,10 @@ td strong{font-weight:500}
         try {
             const info = await api('/api/playlist/info');
             const el = document.getElementById('playlist-info');
-            const addrEl = document.getElementById('playlist-address');
             const lastCheck = info.last_check ? fmtDate(info.last_check) : t('not_checked');
             const lastEpg = info.last_epg_update ? fmtDate(info.last_epg_update) : t('never');
             const epgInfo = info.epg_channel_count > 0 ? `<span>${t('tvg_program')}: <strong>${info.epg_channel_count}</strong> ${t('channels_word')}</span><span>${t('cache')}: <strong>${lastEpg}</strong></span>` : '';
             el.innerHTML = `<span>${t('playlist_info')}: <strong id="playlist-count">${info.channel_count}</strong> ${t('channels_word')}</span><span>${t('last_check')}: <strong>${lastCheck}</strong></span>${epgInfo}`;
-            const baseUrl = window.location.origin;
-            addrEl.innerHTML =
-                linkCard(t('playlist_address'), `${baseUrl}/rus_fixed.m3u`, '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h7"/><path d="M17 15v6l4-3z" fill="currentColor"/></svg>') +
-                linkCard(t('epg_address'), `${baseUrl}/epg.xml`, '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>');
         } catch(e) {}
     }
 
@@ -978,66 +953,72 @@ td strong{font-weight:500}
         window.open('/api/playlist', '_blank');
     }
 
-    let accessOffset = 0;
-    const accessLimit = 10;
+    // ---------- Пользователи ----------
+    let allUsersData = [];
 
-    function renderAccessStats(stats) {
-        document.getElementById('access-stats').innerHTML = `
-            <div class="stat-card"><div class="label">${t('total_requests')}</div><div class="value">${stats.total}</div></div>
-            <div class="stat-card"><div class="label">${t('filter_playlists')}</div><div class="value">${stats.playlist}</div></div>
-            <div class="stat-card"><div class="label">${t('filter_epg')}</div><div class="value">${stats.epg}</div></div>
-            <div class="stat-card"><div class="label">${t('unique_ips')}</div><div class="value">${stats.unique_ips}</div></div>
-        `;
+    async function loadUsers() {
+        allUsersData = await api('/api/users');
+        document.getElementById('users-list').innerHTML = allUsersData.length === 0
+            ? `<tr><td colspan="7" class="empty-state">${t('empty_users')}</td></tr>`
+            : allUsersData.map(u => `<tr>
+                <td><strong${u.enabled ? '' : ' style="color:var(--text-2)"'}>${esc(u.name)}</strong></td>
+                <td><div style="display:flex;gap:6px;flex-wrap:nowrap">
+                    <button class="btn btn-secondary btn-small" onclick="copyText('${u.playlist_url}')" title="${esc(u.playlist_url)}">${ICON_COPY} ${t('link_playlist')}</button>
+                    <button class="btn btn-secondary btn-small" onclick="copyText('${u.epg_url}')" title="${esc(u.epg_url)}">${ICON_COPY} ${t('link_epg')}</button>
+                </div></td>
+                <td style="white-space:nowrap;color:var(--text-2)">${u.last_seen ? fmtDate(u.last_seen) : t('never_connected')}</td>
+                <td style="font-family:var(--font-mono);font-size:12px">${esc(u.last_ip || '—')}</td>
+                <td class="url-cell" style="max-width:260px" title="${esc(u.last_user_agent || '')}">${esc(u.last_user_agent || '—')}</td>
+                <td><label class="toggle" title="${u.enabled ? t('user_enabled') : t('user_disabled')}"><input type="checkbox" ${u.enabled ? 'checked' : ''} onchange="toggleUser(${u.id}, this.checked)"><span class="slider"></span></label></td>
+                <td><div class="row-actions">
+                    <button class="icon-btn sm" onclick="showUserModal(${u.id})" title="${t('edit_user')}">${ICON_EDIT}</button>
+                    <button class="icon-btn sm danger" onclick="deleteUser(${u.id})" title="${t('btn_delete')}">${ICON_DELETE}</button>
+                </div></td>
+            </tr>`).join('');
     }
 
-    async function loadAccessStats() {
-        renderAccessStats(await api('/api/access/stats'));
+    function showUserModal(id = null) {
+        const u = id ? allUsersData.find(x => x.id === id) : null;
+        document.getElementById('user-modal-title').textContent = t(u ? 'edit_user' : 'add_user');
+        document.getElementById('user-edit-id').value = u ? u.id : '';
+        document.getElementById('user-name').value = u ? u.name : '';
+        document.getElementById('user-modal').classList.add('show');
+        setTimeout(() => document.getElementById('user-name').focus(), 50);
     }
 
-    async function loadAccessStatsForPeriod(dateFrom, dateTo) {
-        let url = '/api/access/stats';
-        const params = [];
-        if (dateFrom) params.push(`date_from=${dateFrom}`);
-        if (dateTo) params.push(`date_to=${dateTo}`);
-        if (params.length) url += '?' + params.join('&');
-        renderAccessStats(await api(url));
-    }
+    function closeUserModal() { document.getElementById('user-modal').classList.remove('show'); }
 
-    async function onAccessDateChange() {
-        const dateFrom = document.getElementById('access-date-from').value;
-        const dateTo = document.getElementById('access-date-to').value;
-        accessOffset = 0;
-        await loadAccessLog();
-        if (dateFrom || dateTo) {
-            await loadAccessStatsForPeriod(dateFrom, dateTo);
-        } else {
-            await loadAccessStats();
+    async function saveUser() {
+        const id = document.getElementById('user-edit-id').value;
+        const name = document.getElementById('user-name').value.trim();
+        if (!name) { toast(t('user_name_required'), 'error'); return; }
+        try {
+            if (id) {
+                await api(`/api/users/${id}`, { method: 'PUT', body: JSON.stringify({ name }) });
+                toast(t('toast_user_updated'));
+            } else {
+                await api('/api/users', { method: 'POST', body: JSON.stringify({ name }) });
+                toast(t('toast_user_added'));
+            }
+            closeUserModal();
+            loadUsers();
+        } catch (e) {
+            toast(await errorDetail(e, t('toast_error')), 'error');
         }
     }
 
-    async function loadAccessLog(dateFromParam, dateToParam) {
-        const endpoint = document.getElementById('access-filter').value;
-        const dateFrom = dateFromParam || document.getElementById('access-date-from').value;
-        const dateTo = dateToParam || document.getElementById('access-date-to').value;
-        let url = `/api/access/log?limit=${accessLimit}&offset=${accessOffset}`;
-        if (endpoint) url += `&endpoint=${endpoint}`;
-        if (dateFrom) url += `&date_from=${dateFrom}`;
-        if (dateTo) url += `&date_to=${dateTo}`;
-        const data = await api(url);
-        const log = data.items;
-        document.getElementById('access-log').innerHTML = log.length === 0
-            ? `<tr><td colspan="4" class="empty-state">${t('no_records')}</td></tr>`
-            : log.map(l => `<tr>
-                <td style="white-space:nowrap">${fmtDate(l.timestamp)}</td>
-                <td><span class="group-badge">${esc(l.endpoint === 'epg' ? t('filter_epg') : l.endpoint === 'playlist' ? t('filter_playlists') : l.endpoint)}</span></td>
-                <td style="font-family:var(--font-mono);font-size:12px">${esc(l.ip_address)}</td>
-                <td class="url-cell" style="max-width:420px" title="${esc(l.user_agent)}">${esc(l.user_agent)}</td>
-            </tr>`).join('');
-        const totalPages = Math.ceil(data.total / accessLimit);
-        const curPage = Math.floor(accessOffset / accessLimit) + 1;
-        document.getElementById('access-info').textContent = `${t('showing')} ${log.length} ${t('channels_of')} ${data.total} · ${t('page')} ${curPage}/${totalPages || 1}`;
-        document.getElementById('access-prev').disabled = accessOffset === 0;
-        document.getElementById('access-next').disabled = accessOffset + accessLimit >= data.total;
+    async function toggleUser(id, enabled) {
+        await api(`/api/users/${id}`, { method: 'PUT', body: JSON.stringify({ enabled }) });
+        toast(enabled ? t('toast_user_enabled') : t('toast_user_disabled'));
+        loadUsers();
+    }
+
+    async function deleteUser(id) {
+        const u = allUsersData.find(x => x.id === id);
+        if (!confirm(t('confirm_delete_user').replace('{name}', u ? u.name : ''))) return;
+        await api(`/api/users/${id}`, { method: 'DELETE' });
+        toast(t('toast_user_deleted'));
+        loadUsers();
     }
 
     async function toggleChannel(id, enabled) {
@@ -1080,30 +1061,6 @@ td strong{font-weight:500}
         const curGrp = sel.value;
         sel.innerHTML = `<option value="">${t('all_groups')}</option>` + groups.map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
         sel.value = curGrp;
-    }
-
-    function accessPage(dir) {
-        accessOffset = Math.max(0, accessOffset + dir * accessLimit);
-        loadAccessLog();
-    }
-
-    async function deleteAccessLogs() {
-        const dateFrom = document.getElementById('access-date-from').value;
-        const dateTo = document.getElementById('access-date-to').value;
-        if (!dateFrom && !dateTo) {
-            toast(t('toast_dates_required'), 'error');
-            if (document.getElementById('access-filters').style.display === 'none') toggleFilters('access');
-            return;
-        }
-        if (!confirm(`${t('delete_selected')}${dateFrom ? ' ' + t('period_from') + ' ' + dateFrom : ''}${dateTo ? ' ' + t('period_to') + ' ' + dateTo : ''}?`)) return;
-        let url = '/api/access/log?';
-        if (dateFrom) url += `date_from=${dateFrom}`;
-        if (dateTo) url += `&date_to=${dateTo}`;
-        const res = await api(url, { method: 'DELETE' });
-        toast(`${t('delete_selected')}: ${res.deleted}`);
-        accessOffset = 0;
-        loadAccessLog(dateFrom, dateTo);
-        loadAccessStatsForPeriod(dateFrom, dateTo);
     }
 
     document.addEventListener('keydown', e => {

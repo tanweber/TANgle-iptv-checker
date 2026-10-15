@@ -269,7 +269,9 @@ def scan_cached_source(path, wanted, keep_from, horizon):
 
 def _sanitize_programmes(progs):
     """Сортирует по времени и убирает дубли и пересечения внутри канала."""
-    progs = sorted(progs, key=lambda p: p["start_dt"])
+    # Битые записи источника: окончание раньше начала
+    progs = sorted((p for p in progs if p["stop_dt"] is None or p["stop_dt"] > p["start_dt"]),
+                   key=lambda p: p["start_dt"])
     out = []
     last_stop = None
     for p in progs:

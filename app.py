@@ -4,7 +4,9 @@ import re
 import time
 import hashlib
 import secrets
+import sqlite3
 import threading
+from email.utils import formatdate
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends, Response, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
@@ -142,6 +144,15 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class UserCreate(BaseModel):
+    name: str
+
+
+class UserUpdate(BaseModel):
+    name: str | None = None
+    enabled: bool | None = None
+
+
 class PasswordChange(BaseModel):
     current_password: str
     new_password: str
@@ -176,7 +187,7 @@ def verify_password(password: str, stored: str) -> bool:
 
 
 # API, доступный без входа (вход, статус сессии для healthcheck, публичная EPG)
-PUBLIC_API = {"/api/login", "/api/logout", "/api/check_login", "/api/epg"}
+PUBLIC_API = {"/api/login", "/api/logout", "/api/check_login"}
 
 
 @app.middleware("http")
@@ -391,19 +402,6 @@ async def download_epg():
         raise HTTPException(500, detail=str(e))
 
 
-@app.get("/api/epg")
-async def get_epg(request: Request):
-    client_ip = request.headers.get("x-real-ip") or request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "unknown")
-    user_agent = request.headers.get("user-agent", "unknown")
-    db.log_access("epg", client_ip, user_agent)
-    if not os.path.exists(epg_module.EPG_PATH):
-        return Response(content='<?xml version="1.0" encoding="UTF-8"?><tv/>',
-                        media_type="application/xml")
-    with open(epg_module.EPG_PATH, "r", encoding="utf-8") as f:
-        content = f.read()
-    return Response(content=content, media_type="application/xml")
-
-
 @app.get("/api/channels")
 async def list_channels(source_id: int | None = None, alive: bool | None = None):
     channels = db.get_channels(source_id=source_id, alive_only=(alive is True))
@@ -434,20 +432,44 @@ async def debug_headers(request: Request):
     }
 
 
-@app.get("/api/access/stats")
-async def access_stats(date_from: str | None = None, date_to: str | None = None):
-    return db.get_access_stats(date_from=date_from, date_to=date_to)
+def user_links(user):
+    base = f"{PUBLIC_URL}/u/{user['token']}"
+    return {"playlist_url": f"{base}/playlist.m3u", "epg_url": f"{base}/epg.xml"}
 
 
-@app.get("/api/access/log")
-async def access_log(endpoint: str | None = None, limit: int = 10, offset: int = 0, date_from: str | None = None, date_to: str | None = None):
-    return db.get_access_log(endpoint=endpoint, limit=limit, offset=offset, date_from=date_from, date_to=date_to)
+@app.get("/api/users")
+async def list_users():
+    return [{**u, **user_links(u)} for u in db.get_users()]
 
 
-@app.delete("/api/access/log")
-async def delete_access_log(date_from: str | None = None, date_to: str | None = None):
-    deleted = db.delete_access_log(date_from=date_from, date_to=date_to)
-    return {"ok": True, "deleted": deleted}
+@app.post("/api/users")
+async def create_user(u: UserCreate):
+    name = u.name.strip()
+    if not name:
+        raise HTTPException(400, detail="user_name_required")
+    try:
+        uid = db.add_user(name, secrets.token_urlsafe(12))
+    except sqlite3.IntegrityError:
+        raise HTTPException(400, detail="user_exists")
+    return {"ok": True, "id": uid}
+
+
+@app.put("/api/users/{user_id}")
+async def update_user(user_id: int, u: UserUpdate):
+    name = u.name.strip() if u.name is not None else None
+    if name == "":
+        raise HTTPException(400, detail="user_name_required")
+    try:
+        db.update_user(user_id, name=name, enabled=u.enabled)
+    except sqlite3.IntegrityError:
+        raise HTTPException(400, detail="user_exists")
+    return {"ok": True}
+
+
+@app.delete("/api/users/{user_id}")
+async def delete_user(user_id: int):
+    db.delete_user(user_id)
+    return {"ok": True}
 
 
 @app.post("/api/check")
@@ -470,8 +492,8 @@ async def check_status():
 
 
 # Публичный адрес сервиса — подставляется в плейлист как адрес ТВ-программы
+# Публичный адрес сервиса — из него строятся персональные ссылки пользователей
 PUBLIC_URL = os.environ.get("PUBLIC_URL", "http://localhost:9239").rstrip("/")
-EPG_SERVE_URL = os.environ.get("EPG_SERVE_URL") or f"{PUBLIC_URL}/epg.xml"
 PLAYLIST_PATH = os.environ.get("PLAYLIST_PATH", "/playlist/rus_fixed.m3u")
 playlist_channel_count = 0
 epg_channel_count = 0
@@ -537,7 +559,7 @@ def generate_playlist_file():
 
     unique = sorted(by_name.values(), key=lambda c: c["name"].lower())
 
-    lines = [f'#EXTM3U x-tvg-url="{EPG_SERVE_URL}" url-tvg="{EPG_SERVE_URL}"\n']
+    lines = ['#EXTM3U\n']
     for ch in unique:
         if ch["inf_line"]:
             inf = re.sub(r'group-title="[^"]*"', lambda m: f'group-title="{ch["group_title"]}"', ch["inf_line"])
@@ -590,9 +612,6 @@ async def generate_playlist(request: Request):
         raise HTTPException(401, detail="Unauthorized")
 
     content = generate_playlist_file()
-    client_ip = request.headers.get("x-real-ip") or request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "unknown")
-    user_agent = request.headers.get("user-agent", "unknown")
-    db.log_access("playlist", client_ip, user_agent)
     return Response(content=content, media_type="audio/x-mpegurl",
                     headers={"Content-Disposition": "attachment; filename=playlist.m3u"})
 
@@ -615,21 +634,42 @@ def gzip_capable(request: Request) -> bool:
     return "gzip" in request.headers.get("accept-encoding", "").lower()
 
 
-@app.api_route("/p/rus_fixed.m3u", methods=["GET", "HEAD"])
-@app.api_route("/rus_fixed.m3u", methods=["GET", "HEAD"])
-async def serve_playlist_public(request: Request):
-    if request.method == "GET":
-        db.log_access("playlist", *client_info(request))
-    if not os.path.exists(PLAYLIST_PATH):
-        return Response(content="", status_code=404)
-    return FileResponse(PLAYLIST_PATH, media_type="audio/x-mpegurl", headers=NO_TRANSFORM)
+def resolve_user(request: Request, token: str):
+    """Пользователь по токену из ссылки; None — ссылка неизвестна или отключена."""
+    user = db.get_user_by_token(token)
+    if not user or not user["enabled"]:
+        return None
+    db.touch_user(user["id"], *client_info(request))
+    return user
 
 
-@app.api_route("/epg.xml", methods=["GET", "HEAD"])
-async def serve_epg_public(request: Request):
-    client_ip, user_agent = client_info(request)
-    if request.method == "GET":
-        db.log_access("epg", client_ip, user_agent)
+def last_modified(path):
+    return {"Last-Modified": formatdate(os.path.getmtime(path), usegmt=True)}
+
+
+def not_found():
+    return Response(content="Not found", status_code=404)
+
+
+@app.api_route("/u/{token}/playlist.m3u", methods=["GET", "HEAD"])
+async def serve_user_playlist(token: str, request: Request):
+    user = resolve_user(request, token)
+    if not user or not os.path.exists(PLAYLIST_PATH):
+        return not_found()
+    with open(PLAYLIST_PATH, "r", encoding="utf-8") as f:
+        body = f.read()
+    # Первая строка файла — «#EXTM3U»; подставляем персональный адрес программы
+    body = body.split("\n", 1)[1] if body.startswith("#EXTM3U") else body
+    epg_url = user_links(user)["epg_url"]
+    content = f'#EXTM3U x-tvg-url="{epg_url}" url-tvg="{epg_url}"\n' + body
+    return Response(content=content.encode("utf-8"), media_type="audio/x-mpegurl",
+                    headers={**NO_TRANSFORM, **last_modified(PLAYLIST_PATH)})
+
+
+@app.api_route("/u/{token}/epg.xml", methods=["GET", "HEAD"])
+async def serve_user_epg(token: str, request: Request):
+    if not resolve_user(request, token):
+        return not_found()
     if not os.path.exists(epg_module.EPG_PATH):
         return Response(content='<?xml version="1.0" encoding="UTF-8"?><tv/>',
                         media_type="application/xml", headers=NO_TRANSFORM)
@@ -640,14 +680,11 @@ async def serve_epg_public(request: Request):
     return FileResponse(epg_module.EPG_PATH, media_type="application/xml", headers=NO_TRANSFORM)
 
 
-@app.api_route("/epg.xml.gz", methods=["GET", "HEAD"])
-async def serve_epg_gz_public(request: Request):
-    client_ip = request.headers.get("x-real-ip") or request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "unknown")
-    if request.method == "GET":
-        db.log_access("epg", client_ip, request.headers.get("user-agent", "unknown"))
+@app.api_route("/u/{token}/epg.xml.gz", methods=["GET", "HEAD"])
+async def serve_user_epg_gz(token: str, request: Request):
     gz_path = epg_module.EPG_PATH + ".gz"
-    if not os.path.exists(gz_path):
-        return Response(content="", status_code=404)
+    if not resolve_user(request, token) or not os.path.exists(gz_path):
+        return not_found()
     return FileResponse(gz_path, media_type="application/gzip", filename="epg.xml.gz")
 
 

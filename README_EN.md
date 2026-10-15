@@ -14,7 +14,7 @@ Developed with [MiMo Code](https://github.com/XiaoMi/MiMo) — AI coding assista
 - **Channel Management** — enable/disable individual channels, edit groups. Channels that don't pass the playlist rules (unavailable, unchecked, too slow, low availability) are switched off automatically, with a tooltip explaining why.
 - **Automatic Deduplication** — the fastest copy of a duplicated channel is kept.
 - **TV Guide (EPG)** — downloads and merges XMLTV from multiple sources. Each channel's guide comes from the single source with the best coverage, channel ids match the playlist's `tvg-id`, and the output is valid XML. A compressed `/epg.xml.gz` is also available.
-- **Connection Statistics** — IPs, devices, access history with period filtering and deletion.
+- **Users and personal links** — each user gets their own playlist and TV guide links. Copy them in one click, disable temporarily or delete; see the last connection time, IP address and device.
 - **Security** — the whole API requires sign-in, the password is stored as a PBKDF2 hash, login and password can be changed in the UI.
 - **Clean, responsive UI** — works on desktop, tablets and smartphones.
 - **7 Themes** — Auto, Warm, Warm dark, Light, Dark, Nord, Forest.
@@ -44,7 +44,7 @@ Next:
 1. **Sources** → add M3U playlists (EPG sources are preconfigured).
 2. **Channels** → "Check now". The first check and TV guide build take a few minutes.
 3. **Settings** → choose the playlist rules.
-4. Add the playlist URL `http://<address>/rus_fixed.m3u` to your player. The TV guide is picked up automatically from the playlist header, or set it manually: `http://<address>/epg.xml`.
+4. **Users** → "Add user", enter any name and copy the playlist link. Paste it into the player — the TV guide is picked up automatically from the playlist header (or set it manually with the "TV guide" button).
 
 ### Updating
 
@@ -60,7 +60,7 @@ The database (`data/`), playlist and EPG (`playlist/`) live on the host and are 
 | Variable | Default | Description |
 |---|---|---|
 | `TANGLE_PORT` | `9239` | Host port for the web UI |
-| `PUBLIC_URL` | `http://localhost:9239` | Public URL of the service, no trailing `/`. Written into the playlist as the TV guide address, so players must be able to reach it (e.g. `https://iptv.example.com`) |
+| `PUBLIC_URL` | `http://localhost:9239` | Public URL of the service, no trailing `/`. User links are built from it, so players must be able to reach it (e.g. `https://iptv.example.com`) |
 | `EPG_DAYS` | `7` | How many days ahead the TV guide covers |
 | `ADMIN_LOGIN` | `admin` | Admin login — first start only |
 | `ADMIN_PASSWORD` | `admin` | Admin password — first start only |
@@ -71,7 +71,7 @@ Everything else (check and EPG update intervals, timeouts, worker count, playlis
 
 ### Reverse proxy
 
-For HTTPS, put a reverse proxy (nginx, Caddy, Traefik) in front of TANgle and set the external address in `PUBLIC_URL`. An nginx example is in `nginx.conf`. The proxy should pass the `X-Real-IP` header so connection statistics show real client IPs.
+For HTTPS, put a reverse proxy (nginx, Caddy, Traefik) in front of TANgle and set the external address in `PUBLIC_URL`. An nginx example is in `nginx.conf`. The proxy should pass the `X-Real-IP` header so the user list shows real IPs. Better turn off gzip on the proxy: some players (Televizo) can't read it.
 
 ## Project Structure
 
@@ -94,13 +94,15 @@ tangle/
 
 ## API
 
-Public (no sign-in):
+Personal user links (no sign-in, `{token}` is the user's unique code):
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/rus_fixed.m3u` | Playlist |
-| GET, HEAD | `/epg.xml` | TV guide (XMLTV) |
-| GET, HEAD | `/epg.xml.gz` | TV guide, gzipped |
+| GET, HEAD | `/u/{token}/playlist.m3u` | Playlist |
+| GET, HEAD | `/u/{token}/epg.xml` | TV guide (XMLTV) |
+| GET, HEAD | `/u/{token}/epg.xml.gz` | TV guide, gzipped |
+
+A disabled, deleted or unknown link returns 404.
 
 Sign-in required (session cookie):
 
@@ -116,8 +118,16 @@ Sign-in required (session cookie):
 | GET | `/api/sources` | Playlist sources |
 | GET | `/api/epg-sources` | EPG sources |
 | POST | `/api/check` | Trigger check |
-| GET | `/api/access/log` | Access log |
-| DELETE | `/api/access/log` | Delete log by period |
+| GET, POST | `/api/users` | Users and their links / add a user |
+| PUT, DELETE | `/api/users/{id}` | Rename, disable / delete a user |
+
+## What's new in v2.2
+
+- **Personal links instead of shared ones.** "Users" tab: each user gets their own playlist and TV guide links with a random code. Copy, temporarily disable or delete them — a disabled link stops working immediately.
+- Each user shows the date and time of the last connection, IP address and device.
+- The shared `/rus_fixed.m3u` and `/epg.xml` links are disabled. **When upgrading from v2.1**, create users and replace the links in your players.
+- The "Connections" statistics tab has been removed.
+- Broken programmes whose end is before their start are dropped from the TV guide.
 
 ## What's new in v2.1
 

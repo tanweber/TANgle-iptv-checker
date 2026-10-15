@@ -61,12 +61,15 @@ def init_db():
                 error_message TEXT,
                 created_at REAL DEFAULT (strftime('%s','now'))
             );
-            CREATE TABLE IF NOT EXISTS access_log (
+            CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                endpoint TEXT NOT NULL,
-                ip_address TEXT,
-                user_agent TEXT,
-                timestamp REAL DEFAULT (strftime('%s','now'))
+                name TEXT NOT NULL UNIQUE COLLATE NOCASE,
+                token TEXT NOT NULL UNIQUE,
+                enabled INTEGER DEFAULT 1,
+                last_seen REAL,
+                last_ip TEXT,
+                last_user_agent TEXT,
+                created_at REAL DEFAULT (strftime('%s','now'))
             );
         """)
         cols = [r[1] for r in conn.execute("PRAGMA table_info(epg_sources)").fetchall()]
@@ -344,77 +347,39 @@ def update_epg_source_status(epg_id, is_alive, response_time_ms=None, error_mess
         )
 
 
-def log_access(endpoint, ip_address, user_agent):
+def get_users():
+    with get_conn() as conn:
+        return [dict(r) for r in conn.execute("SELECT * FROM users ORDER BY name COLLATE NOCASE").fetchall()]
+
+
+def get_user_by_token(token):
+    with get_conn() as conn:
+        row = conn.execute("SELECT * FROM users WHERE token=?", (token,)).fetchone()
+        return dict(row) if row else None
+
+
+def add_user(name, token):
+    with get_conn() as conn:
+        cur = conn.execute("INSERT INTO users (name, token) VALUES (?, ?)", (name, token))
+        return cur.lastrowid
+
+
+def update_user(user_id, name=None, enabled=None):
+    with get_conn() as conn:
+        if name is not None:
+            conn.execute("UPDATE users SET name=? WHERE id=?", (name, user_id))
+        if enabled is not None:
+            conn.execute("UPDATE users SET enabled=? WHERE id=?", (1 if enabled else 0, user_id))
+
+
+def delete_user(user_id):
+    with get_conn() as conn:
+        conn.execute("DELETE FROM users WHERE id=?", (user_id,))
+
+
+def touch_user(user_id, ip_address, user_agent):
     with get_conn() as conn:
         conn.execute(
-            "INSERT INTO access_log (endpoint, ip_address, user_agent) VALUES (?, ?, ?)",
-            (endpoint, ip_address, user_agent),
+            "UPDATE users SET last_seen=?, last_ip=?, last_user_agent=? WHERE id=?",
+            (time.time(), ip_address, user_agent, user_id),
         )
-
-
-def get_access_log(endpoint=None, limit=10, offset=0, date_from=None, date_to=None):
-    with get_conn() as conn:
-        conditions = []
-        params = []
-        if endpoint:
-            conditions.append("endpoint=?")
-            params.append(endpoint)
-        if date_from:
-            from datetime import datetime
-            ts = datetime.strptime(date_from, "%Y-%m-%d").timestamp()
-            conditions.append("timestamp>=?")
-            params.append(ts)
-        if date_to:
-            from datetime import datetime, timedelta
-            ts = datetime.strptime(date_to, "%Y-%m-%d").timestamp() + 86400
-            conditions.append("timestamp<=?")
-            params.append(ts)
-        where = " WHERE " + " AND ".join(conditions) if conditions else ""
-        rows = conn.execute(
-            f"SELECT * FROM access_log{where} ORDER BY timestamp DESC LIMIT ? OFFSET ?",
-            params + [limit, offset],
-        ).fetchall()
-        total = conn.execute(f"SELECT COUNT(*) as cnt FROM access_log{where}", params).fetchone()["cnt"]
-        return {"items": [dict(r) for r in rows], "total": total}
-
-
-def get_access_stats(date_from=None, date_to=None):
-    with get_conn() as conn:
-        conditions = []
-        params = []
-        if date_from:
-            ts = datetime.strptime(date_from, "%Y-%m-%d").timestamp()
-            conditions.append("timestamp>=?")
-            params.append(ts)
-        if date_to:
-            ts = datetime.strptime(date_to, "%Y-%m-%d").timestamp() + 86400
-            conditions.append("timestamp<=?")
-            params.append(ts)
-        where = " WHERE " + " AND ".join(conditions) if conditions else ""
-        total = conn.execute(f"SELECT COUNT(*) as cnt FROM access_log{where}", params).fetchone()["cnt"]
-        playlist = conn.execute(f"SELECT COUNT(*) as cnt FROM access_log{where}{' AND' if where else ' WHERE '} endpoint='playlist'", params).fetchone()["cnt"]
-        epg = conn.execute(f"SELECT COUNT(*) as cnt FROM access_log{where}{' AND' if where else ' WHERE '} endpoint='epg'", params).fetchone()["cnt"]
-        unique_ips = conn.execute(f"SELECT COUNT(DISTINCT ip_address) as cnt FROM access_log{where}", params).fetchone()["cnt"]
-        return {
-            "total": total,
-            "playlist": playlist,
-            "epg": epg,
-            "unique_ips": unique_ips,
-        }
-
-
-def delete_access_log(date_from=None, date_to=None):
-    with get_conn() as conn:
-        conditions = []
-        params = []
-        if date_from:
-            ts = datetime.strptime(date_from, "%Y-%m-%d").timestamp()
-            conditions.append("timestamp>=?")
-            params.append(ts)
-        if date_to:
-            ts = datetime.strptime(date_to, "%Y-%m-%d").timestamp() + 86400
-            conditions.append("timestamp<=?")
-            params.append(ts)
-        where = " WHERE " + " AND ".join(conditions) if conditions else ""
-        result = conn.execute(f"DELETE FROM access_log{where}", params)
-        return result.rowcount
