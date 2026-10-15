@@ -23,9 +23,13 @@ TANgle автоматически собирает единый M3U-плейли
 - **Простота развертывания** — Docker, все настройки в одном файле `.env`.
 
 ## Скриншоты
-<img width="1228" height="914" alt="s1" src="https://github.com/user-attachments/assets/4a0d0bf2-2e30-4b7c-93ca-bc893e75cab2" />
-<img width="1217" height="569" alt="s2" src="https://github.com/user-attachments/assets/bbe46017-ed14-4971-a83a-d5b33bd933cc" />
-<img width="1211" height="653" alt="s3" src="https://github.com/user-attachments/assets/afbd1dc9-ab97-48ce-b190-e528a14edebc" />
+| Каналы (тема «Тёплая») | Пользователи («Тёплая тёмная») |
+|---|---|
+| ![Каналы](docs/screenshots/channels.png) | ![Пользователи](docs/screenshots/users.png) |
+| **Источники (Nord)** | **Настройки («Светлая»)** |
+| ![Источники](docs/screenshots/sources.png) | ![Настройки](docs/screenshots/settings.png) |
+| **Вход** | **Смартфон («Лес»)** |
+| ![Вход](docs/screenshots/login.png) | ![Смартфон](docs/screenshots/mobile.png) |
 
 ## Установка
 

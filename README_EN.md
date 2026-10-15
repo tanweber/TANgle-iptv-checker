@@ -23,9 +23,13 @@ Developed with [MiMo Code](https://github.com/XiaoMi/MiMo) — AI coding assista
 - **Easy Deployment** — Docker, all settings in a single `.env` file.
 
 ## Screenshots
-<img width="1228" height="914" alt="s1" src="https://github.com/user-attachments/assets/4a0d0bf2-2e30-4b7c-93ca-bc893e75cab2" />
-<img width="1217" height="569" alt="s2" src="https://github.com/user-attachments/assets/bbe46017-ed14-4971-a83a-d5b33bd933cc" />
-<img width="1211" height="653" alt="s3" src="https://github.com/user-attachments/assets/afbd1dc9-ab97-48ce-b190-e528a14edebc" />
+| Channels (Warm theme) | Users (Warm dark) |
+|---|---|
+| ![Channels](docs/screenshots/channels.png) | ![Users](docs/screenshots/users.png) |
+| **Sources (Nord)** | **Settings (Light)** |
+| ![Sources](docs/screenshots/sources.png) | ![Settings](docs/screenshots/settings.png) |
+| **Sign-in** | **Smartphone (Forest)** |
+| ![Sign-in](docs/screenshots/login.png) | ![Smartphone](docs/screenshots/mobile.png) |
 
 ## Installation
 
