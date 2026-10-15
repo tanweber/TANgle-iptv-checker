@@ -28,11 +28,11 @@ def scheduler_loop():
     last_epg_download = 0
     while scheduler_running:
         interval = int(db.get_setting("check_interval", "3600"))
-        now = time.time()
-        wait = max(0, interval - (now - last_check_time))
+        wait = max(0, interval - (time.time() - last_check_time))
         time.sleep(wait)
         if not scheduler_running:
             break
+        now = time.time()
         run_check_background()
         epg_interval = int(db.get_setting("epg_update_interval", "86400"))
         if now - last_epg_download > epg_interval:
@@ -91,7 +91,16 @@ def stop_scheduler():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    global playlist_channel_count, epg_channel_count
     db.init_db()
+    # Счётчики живут в памяти — после перезапуска восстанавливаем их из готовых файлов
+    try:
+        with open(PLAYLIST_PATH, encoding="utf-8") as f:
+            playlist_channel_count = sum(1 for line in f if line.startswith("#EXTINF:"))
+        with open(epg_module.EPG_PATH, encoding="utf-8") as f:
+            epg_channel_count = f.read().count("<channel ")
+    except OSError:
+        pass
     start_scheduler()
     yield
     stop_scheduler()
@@ -119,8 +128,6 @@ class SettingsUpdate(BaseModel):
     check_interval: int | None = None
     check_timeout: int | None = None
     check_parallel: int | None = None
-    auth_login: str | None = None
-    auth_password: str | None = None
     playlist_all: bool | None = None
     playlist_fast: bool | None = None
     playlist_medium: bool | None = None
@@ -135,6 +142,12 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class PasswordChange(BaseModel):
+    current_password: str
+    new_password: str
+    new_login: str | None = None
+
+
 class EPGSourceCreate(BaseModel):
     name: str
     url: str
@@ -145,6 +158,33 @@ class EPGSourceUpdate(BaseModel):
     name: str | None = None
     url: str | None = None
     enabled: bool | None = None
+
+
+def hash_password(password: str) -> str:
+    salt = secrets.token_bytes(16)
+    digest = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 200_000)
+    return f"pbkdf2${salt.hex()}${digest.hex()}"
+
+
+def verify_password(password: str, stored: str) -> bool:
+    if stored.startswith("pbkdf2$"):
+        _, salt_hex, digest_hex = stored.split("$", 2)
+        digest = hashlib.pbkdf2_hmac("sha256", password.encode(), bytes.fromhex(salt_hex), 200_000)
+        return secrets.compare_digest(digest.hex(), digest_hex)
+    # Старый формат — пароль в открытом виде
+    return secrets.compare_digest(password.encode(), stored.encode())
+
+
+# API, доступный без входа (вход, статус сессии для healthcheck, публичная EPG)
+PUBLIC_API = {"/api/login", "/api/logout", "/api/check_login", "/api/epg"}
+
+
+@app.middleware("http")
+async def auth_middleware(request: Request, call_next):
+    path = request.url.path
+    if path.startswith("/api/") and path not in PUBLIC_API and not get_session_token(request):
+        return Response(content='{"detail":"Unauthorized"}', status_code=401, media_type="application/json")
+    return await call_next(request)
 
 
 def get_session_token(request: Request):
@@ -181,7 +221,7 @@ async def login_page():
 async def login(req: LoginRequest, response: Response):
     login_val = db.get_setting("auth_login", "admin")
     password_val = db.get_setting("auth_password", "admin")
-    if req.login == login_val and req.password == password_val:
+    if secrets.compare_digest(req.login.encode(), login_val.encode()) and verify_password(req.password, password_val):
         token = secrets.token_hex(32)
         sessions[token] = req.login
         response.set_cookie("session", token, httponly=True, max_age=86400)
@@ -195,6 +235,24 @@ async def logout(request: Request, response: Response):
     if token:
         sessions.pop(token, None)
     response.delete_cookie("session")
+    return {"ok": True}
+
+
+@app.post("/api/auth/password")
+async def change_password(req: PasswordChange, request: Request):
+    if not verify_password(req.current_password, db.get_setting("auth_password", "admin")):
+        raise HTTPException(400, detail="wrong_current_password")
+    if len(req.new_password) < 6:
+        raise HTTPException(400, detail="password_too_short")
+    new_login = (req.new_login or "").strip()
+    if new_login:
+        db.set_setting("auth_login", new_login)
+    db.set_setting("auth_password", hash_password(req.new_password))
+    # Завершаем все остальные сессии
+    current = get_session_token(request)
+    for token in list(sessions):
+        if token != current:
+            sessions.pop(token, None)
     return {"ok": True}
 
 
@@ -215,7 +273,6 @@ async def get_settings():
         "check_timeout": int(db.get_setting("check_timeout", "10")),
         "check_parallel": int(db.get_setting("check_parallel", "50")),
         "auth_login": db.get_setting("auth_login", "admin"),
-        "auth_password": db.get_setting("auth_password", "admin"),
         "playlist_all": db.get_setting("playlist_all", "1") == "1",
         "playlist_fast": db.get_setting("playlist_fast", "1") == "1",
         "playlist_medium": db.get_setting("playlist_medium", "1") == "1",
@@ -234,10 +291,6 @@ async def update_settings(s: SettingsUpdate):
         db.set_setting("check_timeout", s.check_timeout)
     if s.check_parallel is not None:
         db.set_setting("check_parallel", s.check_parallel)
-    if s.auth_login is not None:
-        db.set_setting("auth_login", s.auth_login)
-    if s.auth_password is not None:
-        db.set_setting("auth_password", s.auth_password)
     if s.playlist_all is not None:
         db.set_setting("playlist_all", "1" if s.playlist_all else "0")
     if s.playlist_fast is not None:
@@ -353,7 +406,11 @@ async def get_epg(request: Request):
 
 @app.get("/api/channels")
 async def list_channels(source_id: int | None = None, alive: bool | None = None):
-    return db.get_channels(source_id=source_id, alive_only=(alive is True))
+    channels = db.get_channels(source_id=source_id, alive_only=(alive is True))
+    rules = get_playlist_rules()
+    for ch in channels:
+        ch["rule_reason"] = playlist_rule_reason(ch, rules)
+    return channels
 
 
 @app.put("/api/channels/{channel_id}/toggle")
@@ -412,8 +469,9 @@ async def check_status():
     }
 
 
-EPG_SERVE_URL = os.environ.get("EPG_SERVE_URL", "http://localhost:9239/epg.xml")
-PLAYLIST_SERVE_URL = os.environ.get("PLAYLIST_SERVE_URL", "http://localhost:9239/rus_fixed.m3u")
+# Публичный адрес сервиса — подставляется в плейлист как адрес ТВ-программы
+PUBLIC_URL = os.environ.get("PUBLIC_URL", "http://localhost:9239").rstrip("/")
+EPG_SERVE_URL = os.environ.get("EPG_SERVE_URL") or f"{PUBLIC_URL}/epg.xml"
 PLAYLIST_PATH = os.environ.get("PLAYLIST_PATH", "/playlist/rus_fixed.m3u")
 playlist_channel_count = 0
 epg_channel_count = 0
@@ -432,36 +490,41 @@ def normalize_channel_name(name):
     return name
 
 
+def get_playlist_rules():
+    return {
+        "fast": db.get_setting("playlist_fast", "1") == "1",
+        "medium": db.get_setting("playlist_medium", "1") == "1",
+        "slow": db.get_setting("playlist_slow", "1") == "1",
+        "min_availability": int(db.get_setting("min_availability", "0")),
+    }
+
+
+def playlist_rule_reason(ch, rules):
+    """None — канал проходит правила плейлиста, иначе причина исключения."""
+    if ch["last_check"] is None:
+        return "unchecked"
+    ms = ch.get("response_time_ms")
+    if not ch["is_alive"] or ms is None:
+        return "dead"
+    total = ch.get("total_checks", 0)
+    if total > 0 and ch.get("alive_checks", 0) / total * 100 < rules["min_availability"]:
+        return "availability"
+    if ms < 1000:
+        return None if rules["fast"] else "speed_fast"
+    if ms < 3000:
+        return None if rules["medium"] else "speed_medium"
+    return None if rules["slow"] else "speed_slow"
+
+
 def generate_playlist_file():
     global playlist_channel_count
-    pl_fast = db.get_setting("playlist_fast", "1") == "1"
-    pl_medium = db.get_setting("playlist_medium", "1") == "1"
-    pl_slow = db.get_setting("playlist_slow", "1") == "1"
-    min_avail = int(db.get_setting("min_availability", "0"))
-
+    rules = get_playlist_rules()
     channels = db.get_channels()
 
-    alive_channels = []
-    for ch in channels:
-        if not ch.get("enabled", 1):
-            continue
-        if not ch["is_alive"] or ch["last_check"] is None:
-            continue
-        ms = ch.get("response_time_ms")
-        if ms is None:
-            continue
-        total = ch.get("total_checks", 0)
-        alive_cnt = ch.get("alive_checks", 0)
-        if total > 0:
-            avail_pct = alive_cnt / total * 100
-            if avail_pct < min_avail:
-                continue
-        if ms < 1000 and pl_fast:
-            alive_channels.append(ch)
-        elif ms < 3000 and pl_medium:
-            alive_channels.append(ch)
-        elif ms >= 3000 and pl_slow:
-            alive_channels.append(ch)
+    alive_channels = [
+        ch for ch in channels
+        if ch.get("enabled", 1) and playlist_rule_reason(ch, rules) is None
+    ]
 
     by_name = {}
     for ch in alive_channels:
@@ -474,15 +537,15 @@ def generate_playlist_file():
 
     unique = sorted(by_name.values(), key=lambda c: c["name"].lower())
 
-    lines = [f'#EXTM3U x-tvg-url="{EPG_SERVE_URL}" url-tvg="{PLAYLIST_SERVE_URL}"\n']
+    lines = [f'#EXTM3U x-tvg-url="{EPG_SERVE_URL}" url-tvg="{EPG_SERVE_URL}"\n']
     for ch in unique:
         if ch["inf_line"]:
-            inf = re.sub(r'group-title="[^"]*"', f'group-title="{ch["group_title"]}"', ch["inf_line"])
+            inf = re.sub(r'group-title="[^"]*"', lambda m: f'group-title="{ch["group_title"]}"', ch["inf_line"])
             if 'group-title' not in inf:
                 inf = inf.replace("#EXTINF:", f'#EXTINF: group-title="{ch["group_title"]}" ', 1)
         else:
             inf = f'#EXTINF:-1 group-title="{ch["group_title"]}",{ch["name"]}'
-        inf = re.sub(r',[^,]*$', f',{ch["name"]}', inf)
+        inf = re.sub(r',[^,]*$', lambda m: f',{ch["name"]}', inf)
         lines.append(f'{inf}\n{ch["url"]}\n')
 
     content = "".join(lines)
@@ -534,30 +597,58 @@ async def generate_playlist(request: Request):
                     headers={"Content-Disposition": "attachment; filename=playlist.m3u"})
 
 
-@app.get("/p/rus_fixed.m3u")
-@app.get("/rus_fixed.m3u")
-async def serve_playlist_public(request: Request):
+# Заголовки, запрещающие обратному прокси (nginx, NPM) сжимать ответ на лету:
+# nginx не применяет gzip, если Content-Encoding уже задан. Televizo и okhttp
+# заявляют Accept-Encoding: gzip, но сжатый ответ прочитать не могут.
+NO_TRANSFORM = {"Content-Encoding": "identity", "Cache-Control": "no-cache, no-transform", "Vary": "Accept-Encoding"}
+
+
+def client_info(request: Request):
     client_ip = request.headers.get("x-real-ip") or request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "unknown")
-    user_agent = request.headers.get("user-agent", "unknown")
-    db.log_access("playlist", client_ip, user_agent)
+    return client_ip, request.headers.get("user-agent", "unknown")
+
+
+def gzip_capable(request: Request) -> bool:
+    ua = request.headers.get("user-agent", "")
+    if ua.startswith("Player") or "okhttp" in ua:
+        return False
+    return "gzip" in request.headers.get("accept-encoding", "").lower()
+
+
+@app.api_route("/p/rus_fixed.m3u", methods=["GET", "HEAD"])
+@app.api_route("/rus_fixed.m3u", methods=["GET", "HEAD"])
+async def serve_playlist_public(request: Request):
+    if request.method == "GET":
+        db.log_access("playlist", *client_info(request))
     if not os.path.exists(PLAYLIST_PATH):
         return Response(content="", status_code=404)
-    with open(PLAYLIST_PATH, "r", encoding="utf-8") as f:
-        content = f.read()
-    return Response(content=content, media_type="audio/x-mpegurl")
+    return FileResponse(PLAYLIST_PATH, media_type="audio/x-mpegurl", headers=NO_TRANSFORM)
 
 
-@app.get("/epg.xml")
+@app.api_route("/epg.xml", methods=["GET", "HEAD"])
 async def serve_epg_public(request: Request):
-    client_ip = request.headers.get("x-real-ip") or request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "unknown")
-    user_agent = request.headers.get("user-agent", "unknown")
-    db.log_access("epg", client_ip, user_agent)
+    client_ip, user_agent = client_info(request)
+    if request.method == "GET":
+        db.log_access("epg", client_ip, user_agent)
     if not os.path.exists(epg_module.EPG_PATH):
         return Response(content='<?xml version="1.0" encoding="UTF-8"?><tv/>',
-                        media_type="application/xml")
-    with open(epg_module.EPG_PATH, "r", encoding="utf-8") as f:
-        content = f.read()
-    return Response(content=content, media_type="application/xml")
+                        media_type="application/xml", headers=NO_TRANSFORM)
+    gz_path = epg_module.EPG_PATH + ".gz"
+    if gzip_capable(request) and os.path.exists(gz_path):
+        return FileResponse(gz_path, media_type="application/xml",
+                            headers={"Content-Encoding": "gzip", "Vary": "Accept-Encoding"})
+    return FileResponse(epg_module.EPG_PATH, media_type="application/xml", headers=NO_TRANSFORM)
+
+
+@app.api_route("/epg.xml.gz", methods=["GET", "HEAD"])
+async def serve_epg_gz_public(request: Request):
+    client_ip = request.headers.get("x-real-ip") or request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "unknown")
+    if request.method == "GET":
+        db.log_access("epg", client_ip, request.headers.get("user-agent", "unknown"))
+    gz_path = epg_module.EPG_PATH + ".gz"
+    if not os.path.exists(gz_path):
+        return Response(content="", status_code=404)
+    return FileResponse(gz_path, media_type="application/gzip", filename="epg.xml.gz")
 
 
 if __name__ == "__main__":

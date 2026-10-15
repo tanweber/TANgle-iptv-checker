@@ -1,502 +1,402 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-theme="auto">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TANgle - IPTV Checker</title>
+    <title>TANgle — IPTV Checker</title>
+    <script>try{document.documentElement.setAttribute('data-theme',localStorage.getItem('theme')||'auto')}catch(e){}</script>
     <script src="/static/translations.js"></script>
-    <style>
-        :root {
-            --bg: #0f1117; --bg-card: #161b22; --bg-input: #0d1117; --bg-hover: #1c2128;
-            --border: #30363d; --border-light: #21262d;
-            --text: #e1e4e8; --text-muted: #8b949e; --text-link: #58a6ff;
-            --green: #3fb950; --red: #f85149; --yellow: #d29922; --blue: #1f6feb;
-            --btn-bg: #238636; --btn-hover: #2ea043; --btn-secondary-bg: #21262d;
-            --accent: #58a6ff;
-        }
-        [data-theme="light"] {
-            --bg: #f6f8fa; --bg-card: #ffffff; --bg-input: #ffffff; --bg-hover: #f3f4f6;
-            --border: #d0d7de; --border-light: #e1e4e8;
-            --text: #1f2328; --text-muted: #656d76; --text-link: #0969da;
-            --green: #1a7f37; --red: #cf222e; --yellow: #9a6700; --blue: #0969da;
-            --btn-bg: #1a7f37; --btn-hover: #2da44e; --btn-secondary-bg: #f3f4f6;
-            --accent: #0969da;
-        }
-        [data-theme="monokai"] {
-            --bg: #272822; --bg-card: #3e3d32; --bg-input: #1e1f1c; --bg-hover: #49483e;
-            --border: #49483e; --border-light: #3e3d32;
-            --text: #f8f8f2; --text-muted: #75715e; --text-link: #66d9ef;
-            --green: #a6e22e; --red: #f92672; --yellow: #e6db74; --blue: #66d9ef;
-            --btn-bg: #a6e22e; --btn-hover: #b8f040; --btn-secondary-bg: #3e3d32;
-            --accent: #66d9ef;
-        }
-        [data-theme="dracula"] {
-            --bg: #282a36; --bg-card: #44475a; --bg-input: #1e1f29; --bg-hover: #44475a;
-            --border: #6272a4; --border-light: #44475a;
-            --text: #f8f8f2; --text-muted: #6272a4; --text-link: #8be9fd;
-            --green: #50fa7b; --red: #ff5555; --yellow: #f1fa8c; --blue: #6272a4;
-            --btn-bg: #50fa7b; --btn-hover: #69ff94; --btn-secondary-bg: #44475a;
-            --accent: #bd93f9;
-        }
-        [data-theme="nord"] {
-            --bg: #2e3440; --bg-card: #3b4252; --bg-input: #242933; --bg-hover: #3b4252;
-            --border: #434c5e; --border-light: #3b4252;
-            --text: #eceff4; --text-muted: #7b88a1; --text-link: #88c0d0;
-            --green: #a3be8c; --red: #bf616a; --yellow: #ebcb8b; --blue: #5e81ac;
-            --btn-bg: #a3be8c; --btn-hover: #b8d49c; --btn-secondary-bg: #3b4252;
-            --accent: #88c0d0;
-        }
-        [data-theme="solarized"] {
-            --bg: #002b36; --bg-card: #073642; --bg-input: #001e27; --bg-hover: #073642;
-            --border: #586e75; --border-light: #073642;
-            --text: #fdf6e3; --text-muted: #657b83; --text-link: #268bd2;
-            --green: #859900; --red: #dc322f; --yellow: #b58900; --blue: #268bd2;
-            --btn-bg: #859900; --btn-hover: #93a101; --btn-secondary-bg: #073642;
-            --accent: #2aa198;
-        }
-        [data-theme="github"] {
-            --bg: #0d1117; --bg-card: #161b22; --bg-input: #0d1117; --bg-hover: #1c2128;
-            --border: #30363d; --border-light: #21262d;
-            --text: #c9d1d9; --text-muted: #8b949e; --text-link: #58a6ff;
-            --green: #3fb950; --red: #f85149; --yellow: #d29922; --blue: #58a6ff;
-            --btn-bg: #238636; --btn-hover: #2ea043; --btn-secondary-bg: #21262d;
-            --accent: #58a6ff;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); transition: background .2s, color .2s; }
-        .header { background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 10px 24px; display: flex; align-items: center; justify-content: center; }
-        .header-inner { display: flex; align-items: center; gap: 20px; max-width: 1200px; width: 100%; }
-        .header-left { display: flex; align-items: center; gap: 24px; }
-        .header h1 { font-size: 18px; color: var(--accent); white-space: nowrap; }
-        .nav { display: flex; gap: 4px; }
-        .nav button { background: transparent; border: 1px solid var(--border); color: var(--text-muted); padding: 7px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; }
-        .nav button.active, .nav button:hover { background: var(--bg-hover); color: var(--text); border-color: var(--accent); }
-        .header-right { display: flex; align-items: center; gap: 10px; }
-        .btn-logout { background: var(--btn-secondary-bg); border: 1px solid var(--border); color: var(--text-muted); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; }
-        .btn-logout:hover { color: var(--red); border-color: var(--red); }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px 24px; }
-        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
-        .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; text-align: center; }
-        .stat-card .value { font-size: 26px; font-weight: 700; color: var(--accent); }
-        .stat-card .label { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
-        .stat-card.green .value { color: var(--green); }
-        .stat-card.red .value { color: var(--red); }
-        .stat-card.yellow .value { color: var(--yellow); }
-        .panel { display: none; }
-        .panel.active { display: block; }
-        .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-        .panel-header h2 { font-size: 16px; }
-        .btn { background: var(--btn-bg); color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
-        .btn:hover { background: var(--btn-hover); }
-        .btn-secondary { background: var(--btn-secondary-bg); border: 1px solid var(--border); color: var(--text); }
-        .btn-secondary:hover { background: var(--bg-hover); }
-        .btn-danger { background: var(--red); }
-        .btn-danger:hover { opacity: .85; }
-        .btn-small { padding: 4px 10px; font-size: 12px; }
-        .btn-blue { background: var(--blue); }
-        .btn-blue:hover { opacity: .85; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        table { width: 100%; border-collapse: collapse; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-        th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border-light); font-size: 13px; }
-        th { background: var(--bg-hover); color: var(--text-muted); font-weight: 600; position: sticky; top: 0; cursor: pointer; user-select: none; white-space: nowrap; }
-        th:hover { color: var(--text); }
-        th .sort-arrow { font-size: 10px; margin-left: 4px; opacity: 0.4; }
-        th.sorted .sort-arrow { opacity: 1; color: var(--accent); }
-        tr:hover { background: var(--bg-hover); }
-        .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
-        .status-dot.alive { background: var(--green); box-shadow: 0 0 4px var(--green); }
-        .status-dot.dead { background: var(--red); box-shadow: 0 0 4px var(--red); }
-        .status-dot.unknown { background: var(--text-muted); }
-        .response-time { font-size: 12px; }
-        .response-time.fast { color: var(--green); }
-        .response-time.medium { color: var(--yellow); }
-        .response-time.slow { color: var(--red); }
-        .search-bar { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
-        .search-bar input, .search-bar select { background: var(--bg-input); border: 1px solid var(--border); color: var(--text); padding: 7px 10px; border-radius: 6px; font-size: 13px; }
-        .search-bar input { flex: 1; min-width: 180px; }
-        .search-bar select { min-width: 130px; }
-        .modal-overlay { display: none; position: fixed; inset: 0; background: #00000080; z-index: 100; justify-content: center; align-items: center; }
-        .modal-overlay.show { display: flex; }
-        .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; width: 450px; max-width: 90vw; }
-        .modal h3 { margin-bottom: 16px; font-size: 17px; }
-        .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
-        .form-group input, .form-group select { width: 100%; background: var(--bg-input); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 6px; font-size: 14px; }
-        .form-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
-        .toggle { position: relative; width: 36px; height: 20px; display: inline-block; flex-shrink: 0; }
-        .toggle input { opacity: 0; width: 0; height: 0; }
-        .toggle .slider { position: absolute; inset: 0; background: var(--border); border-radius: 10px; cursor: pointer; transition: .2s; }
-        .toggle .slider::before { content: ''; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; background: var(--text-muted); border-radius: 50%; transition: .2s; }
-        .toggle input:checked + .slider { background: var(--btn-bg); }
-        .toggle input:checked + .slider::before { transform: translateX(16px); background: #fff; }
-        .empty-state { text-align: center; padding: 40px 24px; color: var(--text-muted); }
-        .progress-bar { width: 100%; height: 3px; background: var(--border-light); border-radius: 2px; overflow: hidden; margin-bottom: 14px; }
-        .progress-bar .fill { height: 100%; background: var(--accent); transition: width 0.3s; }
-        .toast { position: fixed; bottom: 20px; right: 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 10px 18px; font-size: 13px; z-index: 200; animation: fadeIn .3s; }
-        .toast.success { border-color: var(--btn-bg); color: var(--green); }
-        .toast.error { border-color: var(--red); color: var(--red); }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .table-scroll { max-height: 60vh; overflow: auto; border-radius: 8px; }
-        .table-scroll table { min-width: 100%; }
-        .table-scroll th { position: sticky; top: 0; z-index: 1; }
-        .url-cell { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: var(--text-muted); }
-        .group-badge { background: var(--btn-secondary-bg); border: 1px solid var(--border); padding: 2px 7px; border-radius: 10px; font-size: 11px; white-space: nowrap; }
-        .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
-        .settings-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 18px; }
-        .settings-card h3 { font-size: 14px; margin-bottom: 14px; color: var(--accent); }
-        .checkbox-group { display: flex; flex-direction: column; gap: 10px; }
-        .checkbox-item { display: flex; align-items: center; gap: 10px; }
-        .checkbox-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--btn-bg); }
-        .checkbox-item label { font-size: 13px; cursor: pointer; }
-        .checkbox-item .desc { font-size: 11px; color: var(--text-muted); margin-left: auto; }
-        .speed-fast { color: var(--green); }
-        .speed-medium { color: var(--yellow); }
-        .speed-slow { color: var(--red); }
-        .theme-btn { background: transparent; border: 1px solid var(--border); color: var(--text-muted); width: 32px; height: 32px; border-radius: 6px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
-        .theme-btn:hover { color: var(--text); border-color: var(--accent); }
+    <link rel="stylesheet" href="/static/theme.css">
+<style>
+/* ---------- Layout ---------- */
+.topbar{position:sticky;top:0;z-index:50;background:var(--bar);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--line)}
+.topbar-inner{max-width:1200px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:20px}
+.brand{display:flex;align-items:center;gap:10px;flex-shrink:0;text-decoration:none;color:var(--text)}
+.brand-mark{width:28px;height:28px;border-radius:8px;background:var(--accent);color:var(--on-accent);display:grid;place-items:center}
+.brand-name{font-family:var(--font-display);font-size:19px;font-weight:600;letter-spacing:-.01em}
+.nav{display:flex;gap:2px;padding:3px;background:var(--fill);border-radius:10px;margin:0 auto}
+.nav button{background:transparent;border:0;color:var(--text-2);padding:6px 14px;font:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;white-space:nowrap;transition:background .15s,color .15s}
+.nav button:hover{color:var(--text)}
+.nav button.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm)}
+.actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
 
-        @media (max-width: 768px) {
-            .header { padding: 8px 12px; }
-            .header-inner { flex-wrap: wrap; justify-content: center; gap: 10px; }
-            .header-left { flex-wrap: wrap; justify-content: center; gap: 10px; }
-            .header h1 { font-size: 16px; }
-            .nav { gap: 3px; }
-            .nav button { padding: 6px 10px; font-size: 12px; }
-            .header-right { gap: 6px; }
-            .header-right .btn-blue { font-size: 11px; padding: 5px 8px; }
-            .btn-logout { font-size: 11px; padding: 5px 8px; }
-            .theme-btn { width: 28px; height: 28px; font-size: 14px; }
-            .container { padding: 12px; }
-            .stats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-            .stat-card { padding: 10px; }
-            .stat-card .value { font-size: 20px; }
-            .stat-card .label { font-size: 10px; }
-            .panel-header { flex-wrap: wrap; gap: 8px; }
-            .panel-header h2 { font-size: 15px; }
-            .search-bar { flex-direction: column; }
-            .search-bar input, .search-bar select { min-width: auto; width: 100%; }
-            .table-scroll { max-height: 50vh; overflow: auto; }
-            .table-scroll table { min-width: 700px; }
-            th, td { padding: 6px 8px; font-size: 12px; }
-            .url-cell { max-width: 150px; font-size: 10px; }
-            .settings-grid { grid-template-columns: 1fr; }
-            .settings-card { padding: 14px; }
-            .modal { width: 95vw; padding: 16px; border-radius: 8px; }
-            .modal h3 { font-size: 15px; margin-bottom: 12px; }
-            .form-group input { font-size: 16px; }
-            .stats-bar { padding: 6px 12px; }
-            #playlist-info { font-size: 12px; }
-            .group-badge { font-size: 10px; padding: 1px 5px; }
-            .empty-state { padding: 24px 12px; }
-            .toast { bottom: 12px; right: 12px; left: 12px; font-size: 12px; }
-        }
+.page{max-width:1200px;margin:0 auto;padding:32px 24px 48px;display:flex;flex-direction:column;gap:24px}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.page-head h1{font-family:var(--font-display);font-size:30px;font-weight:600;letter-spacing:-.02em;line-height:1.15}
+.page-head p{color:var(--text-2);font-size:14px;margin-top:6px}
 
-        @media (max-width: 480px) {
-            .stats { grid-template-columns: repeat(2, 1fr); gap: 6px; }
-            .stat-card .value { font-size: 18px; }
-            .nav button { padding: 5px 8px; font-size: 11px; }
-            .header h1 { font-size: 14px; }
-            .btn { padding: 7px 12px; font-size: 12px; }
-            .btn-small { padding: 3px 8px; font-size: 11px; }
-        }
-    </style>
+/* ---------- Playlist info ---------- */
+.links{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.link-card{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg)}
+.link-icon{width:38px;height:38px;border-radius:10px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;flex-shrink:0}
+.link-body{min-width:0;flex:1}
+.link-label{font-size:12px;color:var(--text-2)}
+.link-url{font-size:14px;color:var(--text);text-decoration:none;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.link-url:hover{color:var(--accent)}
+.meta-row{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:13px;color:var(--text-2)}
+.meta-row strong{color:var(--text);font-weight:600}
+
+/* ---------- Stats ---------- */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 18px}
+.stat-card .label{font-size:12px;color:var(--text-2)}
+.stat-card .value{font-size:26px;font-weight:600;letter-spacing:-.02em;margin-top:4px;font-variant-numeric:tabular-nums}
+.stat-card.green .value{color:var(--green)}
+.stat-card.red .value{color:var(--red)}
+.stat-card.yellow .value{color:var(--accent)}
+
+/* ---------- Panels ---------- */
+.panel{display:none;flex-direction:column;gap:20px}
+.panel.active{display:flex}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;flex-wrap:wrap}
+.card-head h2{font-size:16px;font-weight:600;letter-spacing:-.01em}
+.card-head .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.card-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px;border-top:1px solid var(--line);font-size:13px;color:var(--text-2);flex-wrap:wrap}
+
+/* ---------- Filters ---------- */
+.search-bar{display:flex;gap:8px;padding:0 20px 16px;flex-wrap:wrap}
+.search-bar input,.search-bar select{flex:0 1 auto;min-width:150px}
+.search-bar input[type=text]{flex:1 1 240px}
+
+/* ---------- Tables ---------- */
+.table-scroll{max-height:62vh;overflow:auto;border-top:1px solid var(--line)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{position:sticky;top:0;z-index:1;background:var(--surface);padding:10px 16px;text-align:left;font-size:12px;font-weight:500;color:var(--text-2);border-bottom:1px solid var(--line);white-space:nowrap;cursor:pointer;user-select:none}
+th:hover{color:var(--text)}
+th .sort-arrow{font-size:9px;margin-left:4px;opacity:0}
+th.sorted .sort-arrow{opacity:1;color:var(--accent)}
+td{padding:10px 16px;border-bottom:1px solid var(--line-soft);color:var(--text);vertical-align:middle}
+tbody tr{transition:background .1s}
+tbody tr:hover td{background:var(--hover)}
+tbody tr:last-child td{border-bottom:0}
+td strong{font-weight:500}
+.url-cell{max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-2);font-size:12px;font-family:var(--font-mono)}
+.name-cell{display:flex;align-items:center;gap:10px;min-width:180px}
+.row-actions{display:flex;gap:4px;justify-content:flex-end}
+.empty-state{text-align:center;padding:48px 24px!important;color:var(--text-3)}
+
+.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:middle}
+.status-dot.alive{background:var(--green)}
+.status-dot.dead{background:var(--red)}
+.status-dot.unknown{background:var(--text-3)}
+.status-text{font-size:12px;font-weight:500}
+.status-text.fast,.response-time.fast,.speed-fast{color:var(--green)}
+.status-text.medium,.response-time.medium,.speed-medium{color:var(--amber)}
+.status-text.slow,.status-text.dead,.response-time.slow,.speed-slow{color:var(--red)}
+.status-text.unknown,.response-time{color:var(--text-3)}
+.response-time{font-variant-numeric:tabular-nums}
+.group-badge{display:inline-block;background:var(--fill);color:var(--text-2);padding:2px 9px;border-radius:999px;font-size:12px;white-space:nowrap}
+
+/* ---------- Settings ---------- */
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;align-items:start}
+.settings-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:20px}
+.settings-card h3{font-size:15px;font-weight:600;margin-bottom:4px}
+.settings-card .sub{font-size:13px;color:var(--text-2);margin-bottom:16px}
+.settings-card > .btn{margin-top:4px}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:13px;color:var(--text-2);margin-bottom:6px}
+.form-group input,.form-group select{width:100%}
+.hint{font-size:12px;color:var(--text-3);margin-top:6px;display:block}
+.form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:22px}
+.checkbox-group{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden;margin-bottom:14px}
+.checkbox-item{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--line-soft);font-size:14px}
+.checkbox-item:last-child{border-bottom:0}
+.checkbox-item label{cursor:pointer;flex:1}
+.checkbox-item .desc{font-size:12px;color:var(--text-3)}
+.sched p{font-size:14px;margin-bottom:6px}
+.sched .muted{font-size:13px;color:var(--text-2)}
+.divider{height:1px;background:var(--line);margin:18px 0}
+
+/* ---------- Progress ---------- */
+.progress{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:14px 18px}
+.progress-bar{width:100%;height:6px;background:var(--fill);border-radius:999px;overflow:hidden}
+.progress-bar .fill{height:100%;background:var(--accent);border-radius:999px;transition:width .3s}
+#progress-text{font-size:13px;color:var(--text-2);margin-top:10px}
+
+/* ---------- Modal ---------- */
+.modal-overlay{display:none;position:fixed;inset:0;background:var(--scrim);z-index:100;justify-content:center;align-items:center;padding:16px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.modal-overlay.show{display:flex;animation:fade .15s}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-xl);padding:24px;width:460px;max-width:100%;box-shadow:var(--shadow-lg);animation:pop .18s}
+.modal h3{font-family:var(--font-display);font-size:20px;font-weight:600;margin-bottom:20px;letter-spacing:-.01em}
+.switch-row{display:flex;align-items:center;gap:10px;font-size:14px}
+
+/* ---------- Theme menu ---------- */
+.menu-wrap{position:relative}
+.menu{position:absolute;right:0;top:calc(100% + 8px);min-width:200px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);box-shadow:var(--shadow-lg);padding:6px;display:none;z-index:60}
+.menu.show{display:block;animation:pop .14s}
+.menu button{display:flex;align-items:center;gap:10px;width:100%;background:transparent;border:0;color:var(--text);font:inherit;font-size:14px;padding:8px 10px;border-radius:8px;cursor:pointer;text-align:left}
+.menu button:hover{background:var(--hover)}
+.menu .sw{width:16px;height:16px;border-radius:50%;border:1px solid var(--line);flex-shrink:0}
+.menu .check{margin-left:auto;color:var(--accent);visibility:hidden}
+.menu button.on .check{visibility:visible}
+
+.footer{max-width:1200px;margin:0 auto;padding:8px 24px 32px;font-size:12px;color:var(--text-3);display:flex;gap:8px;justify-content:center}
+.footer a{color:var(--text-2);text-decoration:none}
+.footer a:hover{color:var(--accent)}
+
+@media(max-width:900px){
+    .topbar-inner{flex-wrap:wrap;gap:12px;padding:10px 16px}
+    .nav{order:3;width:100%;overflow-x:auto;margin:0}
+    .nav button{flex:1 0 auto;padding:6px 10px;font-size:12.5px}
+    .actions{margin-left:auto}
+}
+@media(max-width:640px){
+    .page{padding:20px 16px 40px;gap:18px}
+    .page-head h1{font-size:24px}
+    .stat-grid{grid-template-columns:repeat(2,1fr);gap:8px}
+    .stat-card{padding:12px 14px}
+    .stat-card .value{font-size:22px}
+    .links{grid-template-columns:1fr}
+    .settings-grid{grid-template-columns:1fr}
+    .table-scroll{max-height:none}
+    .table-scroll table{min-width:760px}
+    th,td{padding:9px 12px}
+    .btn-download-label{display:none}
+    .card-head,.card-foot{padding:14px 16px}
+    .search-bar{padding:0 16px 14px}
+}
+</style>
 </head>
 <body>
-    <div class="header">
-        <div class="header-inner">
-            <div class="header-left">
-                <h1>TANgle</h1>
-                <div class="nav">
-                    <button class="active" onclick="showPanel('channels', this)" data-t="nav_channels">Каналы</button>
-                    <button onclick="showPanel('sources', this)" data-t="nav_sources">Источники</button>
-                    <button onclick="showPanel('settings', this)" data-t="nav_settings">Настройки</button>
-                    <button onclick="showPanel('access', this)" data-t="nav_access">Подключения</button>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a class="brand" href="/">
+                <span class="brand-mark"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M8 2.5l4 3.5 4-3.5"/></svg></span>
+                <span class="brand-name">TANgle</span>
+            </a>
+            <nav class="nav">
+                <button class="active" onclick="showPanel('channels', this)" data-t="nav_channels">Каналы</button>
+                <button onclick="showPanel('sources', this)" data-t="nav_sources">Источники</button>
+                <button onclick="showPanel('settings', this)" data-t="nav_settings">Настройки</button>
+                <button onclick="showPanel('access', this)" data-t="nav_access">Подключения</button>
+            </nav>
+            <div class="actions">
+                <button class="btn btn-primary" onclick="downloadPlaylist()">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>
+                    <span class="btn-download-label" data-t="btn_download">Скачать плейлист</span>
+                </button>
+                <button class="icon-btn" onclick="toggleLang()" id="lang-btn" title="Language">RU</button>
+                <div class="menu-wrap">
+                    <button class="icon-btn" id="theme-btn" onclick="toggleThemeMenu(event)" data-t-title="theme">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 000 18z" fill="currentColor"/></svg>
+                    </button>
+                    <div class="menu" id="theme-menu"></div>
                 </div>
-            </div>
-            <div class="header-right">
-                <button class="btn-blue btn-small" onclick="downloadPlaylist()" style="background:var(--blue);color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:13px;" data-t="btn_download">Скачать плейлист</button>
-                <button class="theme-btn" onclick="toggleLang()" id="lang-btn" title="Сменить язык">RU</button>
-                <button class="theme-btn" onclick="toggleTheme()" id="theme-btn" title="Сменить тему">🌙</button>
-                <button class="btn-logout" onclick="logout()" data-t="btn_logout">Выйти</button>
+                <button class="icon-btn" onclick="logout()" data-t-title="btn_logout" title="Выйти">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 012 2v12a2 2 0 01-2 2h-3M10 17l5-5-5-5M15 12H3"/></svg>
+                </button>
             </div>
         </div>
-    </div>
+    </header>
 
-    <div class="stats-bar" style="background:var(--bg-card);border-bottom:1px solid var(--border);padding:8px 24px;display:flex;justify-content:center;">
-        <div style="max-width:1200px;width:100%;text-align:center;line-height:1.5;">
-            <div id="playlist-info" style="font-size:13px;color:var(--text-muted);"></div>
-            <div id="playlist-address" style="font-size:12px;color:var(--accent);margin-top:4px;"></div>
-        </div>
-    </div>
-
-    <div class="container">
-        <div id="progress-container" style="display:none;">
+    <main class="page">
+        <div id="progress-container" class="progress" style="display:none;">
             <div class="progress-bar"><div class="fill" id="progress-fill" style="width:0%"></div></div>
-            <div id="progress-text" style="font-size:12px;color:#8b949e;margin-bottom:14px;"></div>
+            <div id="progress-text"></div>
         </div>
 
-        <div id="panel-channels" class="panel active">
-            <div class="stats" id="stats-grid"></div>
-            <div class="panel-header">
-                <h2 data-t="nav_channels">Каналы</h2>
-                <div style="display:flex;gap:8px;align-items:center;">
-                    <button class="btn btn-secondary btn-small" onclick="toggleFilters('ch')" id="ch-filter-toggle" data-t="btn_filters">+ Фильтры</button>
-                    <button class="btn" onclick="triggerCheck()" id="check-btn" data-t="btn_check">Проверить сейчас</button>
+        <!-- Каналы -->
+        <section id="panel-channels" class="panel active">
+            <div class="page-head">
+                <div>
+                    <h1 data-t="nav_channels">Каналы</h1>
+                    <div class="meta-row" id="playlist-info" style="margin-top:8px"></div>
                 </div>
+                <button class="btn btn-primary" onclick="triggerCheck()" id="check-btn" data-t="btn_check">Проверить сейчас</button>
             </div>
-            <div class="search-bar" id="ch-filters" style="display:none;">
-                <input type="text" id="ch-search" data-t-placeholder="search_channels" placeholder="Поиск каналов..." oninput="renderChannels()">
-                <select id="ch-filter" onchange="renderChannels()">
-                    <option value="all" data-t="filter_all">Все</option>
-                    <option value="alive" data-t="filter_alive">Живые</option>
-                    <option value="fast" data-t="filter_fast">Быстрые (&lt;1с)</option>
-                    <option value="medium" data-t="filter_medium">Средние (1-3с)</option>
-                    <option value="slow" data-t="filter_slow">Медленные (&gt;3с)</option>
-                    <option value="dead" data-t="filter_dead">Мёртвые</option>
-                    <option value="unchecked" data-t="filter_unchecked">Не проверены</option>
-                </select>
-                <select id="ch-group-filter" onchange="renderChannels()"><option value="" data-t="all_groups">Все группы</option></select>
-                <select id="ch-source-filter" onchange="renderChannels()"><option value="" data-t="all_sources">Все источники</option></select>
-            </div>
-            <div class="table-scroll">
-                <table>
-                    <thead><tr>
-                        <th onclick="sortChannels('status')"><span data-t="col_status">Статус</span> <span class="sort-arrow">▲</span></th>
-                        <th onclick="sortChannels('name')"><span data-t="col_name">Название</span> <span class="sort-arrow">▲</span></th>
-                        <th onclick="sortChannels('group')"><span data-t="col_group">Группа</span> <span class="sort-arrow">▲</span></th>
-                        <th onclick="sortChannels('source')"><span data-t="col_source">Источник</span> <span class="sort-arrow">▲</span></th>
-                        <th onclick="sortChannels('response')"><span data-t="col_response">Отклик</span> <span class="sort-arrow">▲</span></th>
-                        <th onclick="sortChannels('availability')"><span data-t="col_availability">Доступность</span> <span class="sort-arrow">▲</span></th>
-                        <th onclick="sortChannels('last_check')"><span data-t="col_last_check">Проверен</span> <span class="sort-arrow">▲</span></th>
-                        <th onclick="sortChannels('url')"><span data-t="col_url">URL</span> <span class="sort-arrow">▲</span></th>
-                        <th data-t="col_actions">Действия</th>
-                    </tr></thead>
-                    <tbody id="all-channels"></tbody>
-                </table>
-            </div>
-            <div style="margin-top:10px;font-size:12px;color:var(--text-muted);" id="channels-count"></div>
-        </div>
-
-        <div id="panel-sources" class="panel">
-            <div class="panel-header">
-                <h2 data-t="sources_playlists">Источники плейлистов</h2>
-                <button class="btn" onclick="showSourceModal()" data-t="btn_add_source">Добавить источник</button>
-            </div>
-            <div class="table-scroll">
-                <table>
-                    <thead><tr><th data-t="col_name">Название</th><th data-t="col_url">URL</th><th data-t="col_status">Статус</th><th data-t="col_channels_count">Каналов</th><th data-t="col_last_check">Проверен</th><th data-t="col_enabled">Активен</th><th data-t="col_actions">Действия</th></tr></thead>
-                    <tbody id="sources-list"></tbody>
-                </table>
-            </div>
-
-            <div style="margin-top:28px;">
-                <div class="panel-header">
-                    <h2 data-t="sources_epg">Источники ТВ-программы (EPG)</h2>
-                    <button class="btn" onclick="showEPGSourceModal()" data-t="btn_add_epg">Добавить EPG источник</button>
+            <div class="links" id="playlist-address"></div>
+            <div class="stat-grid" id="stats-grid"></div>
+            <div class="card">
+                <div class="card-head">
+                    <h2 data-t="all_channels_title">Все каналы</h2>
+                    <div class="tools">
+                        <button class="btn btn-secondary btn-small" onclick="toggleFilters('ch')" id="ch-filter-toggle">Фильтры</button>
+                    </div>
+                </div>
+                <div class="search-bar" id="ch-filters" style="display:none;">
+                    <input type="text" id="ch-search" data-t-placeholder="search_channels" placeholder="Поиск каналов..." oninput="renderChannels()">
+                    <select id="ch-filter" onchange="renderChannels()">
+                        <option value="all" data-t="filter_all">Все</option>
+                        <option value="alive" data-t="filter_alive">Живые</option>
+                        <option value="fast" data-t="filter_fast">Быстрые (&lt;1с)</option>
+                        <option value="medium" data-t="filter_medium">Средние (1-3с)</option>
+                        <option value="slow" data-t="filter_slow">Медленные (&gt;3с)</option>
+                        <option value="dead" data-t="filter_dead">Мёртвые</option>
+                        <option value="unchecked" data-t="filter_unchecked">Не проверены</option>
+                    </select>
+                    <select id="ch-group-filter" onchange="renderChannels()"><option value="" data-t="all_groups">Все группы</option></select>
+                    <select id="ch-source-filter" onchange="renderChannels()"><option value="" data-t="all_sources">Все источники</option></select>
                 </div>
                 <div class="table-scroll">
                     <table>
-                        <thead><tr><th data-t="col_name">Название</th><th data-t="col_url">URL</th><th data-t="col_enabled">Активен</th><th data-t="col_status">Статус</th><th data-t="col_channels_count">Каналов</th><th>Обновлено</th><th data-t="col_actions">Действия</th></tr></thead>
+                        <thead><tr>
+                            <th onclick="sortChannels('status')"><span data-t="col_status">Статус</span><span class="sort-arrow">▲</span></th>
+                            <th onclick="sortChannels('name')"><span data-t="col_name">Название</span><span class="sort-arrow">▲</span></th>
+                            <th onclick="sortChannels('group')"><span data-t="col_group">Группа</span><span class="sort-arrow">▲</span></th>
+                            <th onclick="sortChannels('source')"><span data-t="col_source">Источник</span><span class="sort-arrow">▲</span></th>
+                            <th onclick="sortChannels('response')"><span data-t="col_response">Отклик</span><span class="sort-arrow">▲</span></th>
+                            <th onclick="sortChannels('availability')"><span data-t="col_availability">Доступность</span><span class="sort-arrow">▲</span></th>
+                            <th onclick="sortChannels('last_check')"><span data-t="col_last_check">Проверен</span><span class="sort-arrow">▲</span></th>
+                            <th onclick="sortChannels('url')"><span data-t="col_url">URL</span><span class="sort-arrow">▲</span></th>
+                            <th style="cursor:default"></th>
+                        </tr></thead>
+                        <tbody id="all-channels"></tbody>
+                    </table>
+                </div>
+                <div class="card-foot"><span id="channels-count"></span></div>
+            </div>
+        </section>
+
+        <!-- Источники -->
+        <section id="panel-sources" class="panel">
+            <div class="page-head"><div><h1 data-t="nav_sources">Источники</h1><p data-t="sources_sub">Плейлисты и ТВ-программа, из которых собирается итоговый плейлист</p></div></div>
+            <div class="card">
+                <div class="card-head">
+                    <h2 data-t="sources_playlists">Источники плейлистов</h2>
+                    <button class="btn btn-secondary btn-small" onclick="showSourceModal()" data-t="btn_add_source">Добавить источник</button>
+                </div>
+                <div class="table-scroll">
+                    <table>
+                        <thead><tr><th data-t="col_name">Название</th><th data-t="col_url">URL</th><th data-t="col_status">Статус</th><th data-t="col_channels_count">Каналов</th><th data-t="col_last_check">Проверен</th><th data-t="col_enabled">Активен</th><th></th></tr></thead>
+                        <tbody id="sources-list"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-head">
+                    <h2 data-t="sources_epg">Источники ТВ-программы (EPG)</h2>
+                    <button class="btn btn-secondary btn-small" onclick="showEPGSourceModal()" data-t="btn_add_epg">Добавить EPG источник</button>
+                </div>
+                <div class="table-scroll">
+                    <table>
+                        <thead><tr><th data-t="col_name">Название</th><th data-t="col_url">URL</th><th data-t="col_enabled">Активен</th><th data-t="col_status">Статус</th><th data-t="col_channels_count">Каналов</th><th data-t="col_updated">Обновлено</th><th></th></tr></thead>
                         <tbody id="epg-sources-list"></tbody>
                     </table>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div id="panel-settings" class="panel">
+        <!-- Настройки -->
+        <section id="panel-settings" class="panel">
+            <div class="page-head"><div><h1 data-t="nav_settings">Настройки</h1></div></div>
             <div class="settings-grid">
                 <div class="settings-card">
-                    <h3>Планировщик проверок</h3>
-                    <div class="form-group">
-                        <label>Интервал проверки (секунды)</label>
-                        <input type="number" id="set-interval" min="60">
-                    </div>
-                    <div class="form-group">
-                        <label>Таймаут канала (секунды)</label>
-                        <input type="number" id="set-timeout" min="1" max="60">
-                    </div>
-                    <div class="form-group">
-                        <label>Параллельных потоков</label>
-                        <input type="number" id="set-parallel" min="1" max="200">
-                    </div>
-                    <button class="btn" onclick="saveSettings()" data-t="btn_save">Сохранить</button>
-                </div>
-
-                <div class="settings-card">
-                    <h3 data-t="playlist_rules">Правила формирования плейлиста</h3>
-                    <div class="form-group">
-                        <label data-t="min_availability">Минимальная доступность (%)</label>
-                        <input type="number" id="set-min-availability" min="0" max="100" step="5">
-                        <span style="font-size:11px;color:var(--text-muted);margin-top:4px;display:block;" data-t="min_availability_desc">Каналы с доступностью ниже этого значения не попадут в плейлист</span>
-                    </div>
-                    <div class="checkbox-group">
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="pl-all" onchange="onPlaylistAllChange(this.checked)">
-                            <label for="pl-all" data-t="all_channels">Все каналы</label>
-                            <span class="desc speed-fast" data-t="all_channels_desc">включает все категории</span>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="pl-fast" onchange="onPlaylistSubChange('fast', this.checked)">
-                            <label for="pl-fast"><span data-t="fast_channels">Быстрые</span> <span class="speed-fast">(&lt;1с)</span></label>
-                            <span class="desc" data-t="fast_desc">зелёные</span>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="pl-medium" onchange="onPlaylistSubChange('medium', this.checked)">
-                            <label for="pl-medium"><span data-t="medium_channels">Средние</span> <span class="speed-medium">(1-3с)</span></label>
-                            <span class="desc" data-t="medium_desc">жёлтые</span>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="pl-slow" onchange="onPlaylistSubChange('slow', this.checked)">
-                            <label for="pl-slow"><span data-t="slow_channels">Медленные</span> <span class="speed-slow">(&gt;3с)</span></label>
-                            <span class="desc" data-t="slow_desc">красные</span>
-                        </div>
-                    </div>
-                    <div style="margin-top:12px;">
-                        <button class="btn" onclick="savePlaylistSettings()" data-t="btn_save_rules">Сохранить правила</button>
-                    </div>
-                </div>
-
-                <div class="settings-card">
-                    <h3 data-t="auth">Авторизация</h3>
-                    <div class="form-group">
-                        <label data-t="label_login">Логин</label>
-                        <input type="text" id="set-login">
-                    </div>
-                    <div class="form-group">
-                        <label data-t="label_password">Пароль</label>
-                        <input type="password" id="set-password">
-                    </div>
-                    <div class="form-group">
-                        <label data-t="label_password_repeat">Повторите пароль</label>
-                        <input type="password" id="set-password-repeat">
-                    </div>
-                    <button class="btn" onclick="saveAuthSettings()" data-t="btn_save_auth">Сохранить</button>
-                </div>
-
-                <div class="settings-card">
-                    <h3 data-t="scheduler_status">Состояние планировщика</h3>
-                    <div id="scheduler-status"></div>
-                </div>
-
-                <div class="settings-card">
-                    <h3 data-t="epg_settings">ТВ-программа (EPG)</h3>
-                    <div class="form-group">
-                        <label data-t="epg_update_interval">Интервал обновления кэша EPG (секунды)</label>
-                        <input type="number" id="set-epg-interval" min="3600" step="3600">
-                    </div>
-                    <button class="btn" onclick="saveSettings()" data-t="btn_save">Сохранить</button>
-                </div>
-
-                <div class="settings-card">
-                    <h3 data-t="availability_settings">Статистика доступности</h3>
+                    <h3 data-t="scheduler">Планировщик проверок</h3>
+                    <div class="sub sched" id="scheduler-status"></div>
+                    <div class="form-group"><label data-t="check_interval">Интервал проверки (секунды)</label><input type="number" id="set-interval" min="60"></div>
+                    <div class="form-group"><label data-t="check_timeout">Таймаут канала (секунды)</label><input type="number" id="set-timeout" min="1" max="60"></div>
+                    <div class="form-group"><label data-t="parallel_workers">Параллельных потоков</label><input type="number" id="set-parallel" min="1" max="200"></div>
+                    <div class="divider"></div>
+                    <div class="form-group"><label data-t="epg_update_interval">Интервал обновления EPG (секунды)</label><input type="number" id="set-epg-interval" min="3600" step="3600"></div>
                     <div class="form-group">
                         <label data-t="availability_period">Период расчёта (дни)</label>
                         <input type="number" id="set-availability-period" min="1" max="365">
-                        <span style="font-size:11px;color:var(--text-muted);margin-top:4px;display:block;" data-t="availability_period_desc">За сколько дней считать процент доступности канала</span>
+                        <span class="hint" data-t="availability_period_desc">За сколько дней считать доступность</span>
                     </div>
-                    <button class="btn" onclick="saveSettings()" data-t="btn_save">Сохранить</button>
+                    <button class="btn btn-primary" onclick="saveSettings()" data-t="btn_save">Сохранить</button>
+                </div>
+                <div class="settings-card">
+                    <h3 data-t="playlist_rules">Правила формирования плейлиста</h3>
+                    <div class="sub" data-t="playlist_rules_sub">Какие каналы попадут в итоговый плейлист</div>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item"><input type="checkbox" id="pl-all" onchange="onPlaylistAllChange(this.checked)"><label for="pl-all" data-t="all_channels">Все каналы</label><span class="desc" data-t="all_channels_desc">включает все</span></div>
+                        <div class="checkbox-item"><input type="checkbox" id="pl-fast" onchange="onPlaylistSubChange('fast', this.checked)"><label for="pl-fast" data-t="fast_channels">Быстрые (&lt;1с)</label><span class="status-dot alive"></span></div>
+                        <div class="checkbox-item"><input type="checkbox" id="pl-medium" onchange="onPlaylistSubChange('medium', this.checked)"><label for="pl-medium" data-t="medium_channels">Средние (1-3с)</label><span class="status-dot" style="background:var(--amber)"></span></div>
+                        <div class="checkbox-item"><input type="checkbox" id="pl-slow" onchange="onPlaylistSubChange('slow', this.checked)"><label for="pl-slow" data-t="slow_channels">Медленные (&gt;3с)</label><span class="status-dot dead"></span></div>
+                    </div>
+                    <div class="form-group">
+                        <label data-t="min_availability">Минимальная доступность (%)</label>
+                        <input type="number" id="set-min-availability" min="0" max="100" step="5">
+                        <span class="hint" data-t="min_availability_desc">Каналы ниже этого значения не попадут в плейлист</span>
+                    </div>
+                    <button class="btn btn-primary" onclick="savePlaylistSettings()" data-t="btn_save_rules">Сохранить правила</button>
+                </div>
+                <div class="settings-card">
+                    <h3 data-t="auth">Вход в систему</h3>
+                    <div class="sub" data-t="auth_sub">Смена логина и пароля администратора</div>
+                    <div class="form-group"><label data-t="label_login">Логин</label><input type="text" id="set-login" autocomplete="username"></div>
+                    <div class="form-group"><label data-t="label_current_password">Текущий пароль</label><input type="password" id="set-current-password" autocomplete="current-password"></div>
+                    <div class="form-group"><label data-t="label_new_password">Новый пароль</label><input type="password" id="set-password" autocomplete="new-password"></div>
+                    <div class="form-group"><label data-t="label_password_repeat">Повторите пароль</label><input type="password" id="set-password-repeat" autocomplete="new-password"></div>
+                    <button class="btn btn-primary" onclick="saveAuthSettings()" data-t="btn_change_password">Сменить пароль</button>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div id="panel-access" class="panel">
-            <div class="panel-header">
-                <h2 data-t="access_stats">Статистика подключений</h2>
-                <button class="btn btn-secondary btn-small" onclick="toggleFilters('access')" id="access-filter-toggle" data-t="btn_filters">+ Фильтры</button>
-            </div>
-            <div class="stats" id="access-stats"></div>
-            <div class="search-bar" id="access-filters" style="display:none;">
-                <select id="access-filter" onchange="loadAccessLog()">
-                    <option value="" data-t="filter_all">Все</option>
-                    <option value="playlist" data-t="filter_playlists">Плейлист</option>
-                    <option value="epg" data-t="filter_epg">ТВ-программа</option>
-                </select>
-                <input type="date" id="access-date-from" onchange="onAccessDateChange()">
-                <input type="date" id="access-date-to" onchange="onAccessDateChange()">
-            </div>
-            <div class="table-scroll">
-                <table>
-                    <thead><tr>
-                        <th data-t="col_time">Время</th>
-                        <th data-t="col_endpoint">Эндпоинт</th>
-                        <th data-t="col_ip">IP адрес</th>
-                        <th data-t="col_device">Устройство</th>
-                    </tr></thead>
-                    <tbody id="access-log"></tbody>
-                </table>
-            </div>
-            <div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;">
-                <button class="btn btn-danger btn-small" onclick="deleteAccessLogs()" data-t="delete_selected">Удалить выбранное</button>
-                <span id="access-info" style="font-size:12px;color:var(--text-muted);"></span>
-                <div style="display:flex;gap:6px;">
-                    <button class="btn btn-secondary btn-small" id="access-prev" onclick="accessPage(-1)" disabled data-t="btn_prev">← Назад</button>
-                    <button class="btn btn-secondary btn-small" id="access-next" onclick="accessPage(1)" disabled data-t="btn_next">Вперёд →</button>
+        <!-- Подключения -->
+        <section id="panel-access" class="panel">
+            <div class="page-head"><div><h1 data-t="nav_access">Подключения</h1><p data-t="access_sub">Кто и когда запрашивал плейлист и ТВ-программу</p></div></div>
+            <div class="stat-grid" id="access-stats"></div>
+            <div class="card">
+                <div class="card-head">
+                    <h2 data-t="access_stats">Статистика подключений</h2>
+                    <button class="btn btn-secondary btn-small" onclick="toggleFilters('access')" id="access-filter-toggle">Фильтры</button>
+                </div>
+                <div class="search-bar" id="access-filters" style="display:none;">
+                    <select id="access-filter" onchange="loadAccessLog()">
+                        <option value="" data-t="filter_all">Все</option>
+                        <option value="playlist" data-t="filter_playlists">Плейлист</option>
+                        <option value="epg" data-t="filter_epg">ТВ-программа</option>
+                    </select>
+                    <input type="date" id="access-date-from" onchange="onAccessDateChange()">
+                    <input type="date" id="access-date-to" onchange="onAccessDateChange()">
+                </div>
+                <div class="table-scroll">
+                    <table>
+                        <thead><tr><th data-t="col_time">Время</th><th data-t="col_endpoint">Эндпоинт</th><th data-t="col_ip">IP адрес</th><th data-t="col_device">Устройство</th></tr></thead>
+                        <tbody id="access-log"></tbody>
+                    </table>
+                </div>
+                <div class="card-foot">
+                    <button class="btn btn-danger btn-small" onclick="deleteAccessLogs()" data-t="delete_selected">Удалить</button>
+                    <span id="access-info"></span>
+                    <div style="display:flex;gap:6px;">
+                        <button class="btn btn-secondary btn-small" id="access-prev" onclick="accessPage(-1)" disabled data-t="btn_prev">←</button>
+                        <button class="btn btn-secondary btn-small" id="access-next" onclick="accessPage(1)" disabled data-t="btn_next">→</button>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
+        </section>
+    </main>
 
-    <div class="modal-overlay" id="channel-modal">
+    <footer class="footer">TANgle IPTV Checker · <a href="https://github.com/tanweber/TANgle-iptv-checker" target="_blank">GitHub</a></footer>
+
+    <div class="modal-overlay" id="channel-modal" onclick="if(event.target===this)closeChannelModal()">
         <div class="modal">
             <h3 id="channel-modal-title" data-t="edit_channel">Редактировать канал</h3>
             <input type="hidden" id="ch-edit-id">
-            <div class="form-group">
-                <label data-t="channel_name">Название канала</label>
-                <input type="text" id="ch-edit-name" readonly style="opacity:0.7;cursor:not-allowed;">
-            </div>
-            <div class="form-group">
-                <label data-t="channel_group">Группа канала</label>
-                <input type="text" id="ch-edit-group" data-t-placeholder="channel_group_placeholder" placeholder="Например: Новости, Кино, Музыка">
-            </div>
+            <div class="form-group"><label data-t="channel_name">Название</label><input type="text" id="ch-edit-name" readonly></div>
+            <div class="form-group"><label data-t="channel_group">Группа</label><input type="text" id="ch-edit-group" data-t-placeholder="channel_group_placeholder" placeholder="Новости, Кино, Музыка"></div>
             <div class="form-actions">
                 <button class="btn btn-secondary" onclick="closeChannelModal()" data-t="btn_cancel">Отмена</button>
-                <button class="btn" onclick="saveChannelGroup()" data-t="btn_save">Сохранить</button>
+                <button class="btn btn-primary" onclick="saveChannelGroup()" data-t="btn_save">Сохранить</button>
             </div>
         </div>
     </div>
-
-    <div class="modal-overlay" id="source-modal">
+    <div class="modal-overlay" id="source-modal" onclick="if(event.target===this)closeSourceModal()">
         <div class="modal">
             <h3 id="modal-title" data-t="add_source">Добавить источник</h3>
             <input type="hidden" id="src-edit-id">
-            <div class="form-group">
-                <label data-t="label_name">Название</label>
-                <input type="text" id="src-name" data-t-placeholder="source_name_placeholder" placeholder="Например: IPTV Org Russian">
-            </div>
-            <div class="form-group">
-                <label data-t="label_url">URL (.m3u / .m3u8)</label>
-                <input type="url" id="src-url" data-t-placeholder="source_url_placeholder" placeholder="https://example.com/playlist.m3u">
-            </div>
-            <div class="form-group" style="display:flex;align-items:center;gap:10px;">
-                <label class="toggle"><input type="checkbox" id="src-enabled" checked><span class="slider"></span></label>
-                <span data-t="label_enabled">Активен</span>
-            </div>
+            <div class="form-group"><label data-t="label_name">Название</label><input type="text" id="src-name" data-t-placeholder="source_name_placeholder" placeholder="IPTV Org Russian"></div>
+            <div class="form-group"><label data-t="label_url">URL (.m3u)</label><input type="url" id="src-url" placeholder="https://example.com/playlist.m3u"></div>
+            <div class="switch-row"><label class="toggle"><input type="checkbox" id="src-enabled" checked><span class="slider"></span></label><span data-t="label_enabled">Активен</span></div>
             <div class="form-actions">
                 <button class="btn btn-secondary" onclick="closeSourceModal()" data-t="btn_cancel">Отмена</button>
-                <button class="btn" onclick="saveSource()" data-t="btn_save">Сохранить</button>
+                <button class="btn btn-primary" onclick="saveSource()" data-t="btn_save">Сохранить</button>
             </div>
         </div>
     </div>
-
-    <div class="modal-overlay" id="epg-source-modal">
+    <div class="modal-overlay" id="epg-source-modal" onclick="if(event.target===this)closeEPGSourceModal()">
         <div class="modal">
-            <h3 id="epg-modal-title" data-t="add_epg_source">Добавить EPG источник</h3>
+            <h3 id="epg-modal-title" data-t="add_epg_source">Добавить EPG</h3>
             <input type="hidden" id="epg-src-edit-id">
-            <div class="form-group">
-                <label data-t="label_name">Название</label>
-                <input type="text" id="epg-src-name" placeholder="Например: EPG It999">
-            </div>
-            <div class="form-group">
-                <label data-t="label_epg_url">URL (.xml.gz / .xml)</label>
-                <input type="url" id="epg-src-url" placeholder="http://epg.it999.ru/edem.xml.gz">
-            </div>
-            <div class="form-group" style="display:flex;align-items:center;gap:10px;">
-                <label class="toggle"><input type="checkbox" id="epg-src-enabled" checked><span class="slider"></span></label>
-                <span data-t="label_enabled">Активен</span>
-            </div>
+            <div class="form-group"><label data-t="label_name">Название</label><input type="text" id="epg-src-name" placeholder="EPG It999"></div>
+            <div class="form-group"><label data-t="label_epg_url">URL (.xml.gz)</label><input type="url" id="epg-src-url" placeholder="http://epg.it999.ru/edem.xml.gz"></div>
+            <div class="switch-row"><label class="toggle"><input type="checkbox" id="epg-src-enabled" checked><span class="slider"></span></label><span data-t="label_enabled">Активен</span></div>
             <div class="form-actions">
                 <button class="btn btn-secondary" onclick="closeEPGSourceModal()" data-t="btn_cancel">Отмена</button>
-                <button class="btn" onclick="saveEPGSource()" data-t="btn_save">Сохранить</button>
+                <button class="btn btn-primary" onclick="saveEPGSource()" data-t="btn_save">Сохранить</button>
             </div>
         </div>
     </div>
@@ -507,32 +407,34 @@
     let chSortKey = 'name';
     let chSortAsc = true;
 
-    const themes = [
-        { id: 'dark', icon: '🌙', name: 'Тёмная' },
-        { id: 'light', icon: '☀️', name: 'Светлая' },
-        { id: 'monokai', icon: '🎨', name: 'Monokai' },
-        { id: 'dracula', icon: '🧛', name: 'Dracula' },
-        { id: 'nord', icon: '❄️', name: 'Nord' },
-        { id: 'solarized', icon: '🌊', name: 'Solarized' },
-        { id: 'github', icon: '🐙', name: 'GitHub' },
-    ];
+    const ICON_EDIT = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4"/></svg>';
+    const ICON_DELETE = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>';
+    const ICON_COPY = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 012-2h9"/></svg>';
 
+    // ---------- Themes ----------
     function initTheme() {
-        const saved = localStorage.getItem('theme') || 'dark';
-        document.documentElement.setAttribute('data-theme', saved);
-        const t = themes.find(x => x.id === saved) || themes[0];
-        document.getElementById('theme-btn').textContent = t.icon;
-        document.getElementById('theme-btn').title = t.name;
+        renderThemeMenu();
+        document.addEventListener('click', e => {
+            if (!e.target.closest('.menu-wrap')) document.getElementById('theme-menu').classList.remove('show');
+        });
     }
 
-    function toggleTheme() {
-        const current = document.documentElement.getAttribute('data-theme') || 'dark';
-        const idx = themes.findIndex(x => x.id === current);
-        const next = themes[(idx + 1) % themes.length];
-        document.documentElement.setAttribute('data-theme', next.id);
-        localStorage.setItem('theme', next.id);
-        document.getElementById('theme-btn').textContent = next.icon;
-        document.getElementById('theme-btn').title = next.name;
+    function renderThemeMenu() {
+        const cur = document.documentElement.getAttribute('data-theme') || 'auto';
+        document.getElementById('theme-menu').innerHTML = THEMES.map(th =>
+            `<button class="${th.id === cur ? 'on' : ''}" onclick="setTheme('${th.id}')"><span class="sw" style="background:${th.swatch}"></span>${t('theme_' + th.id)}<span class="check">✓</span></button>`
+        ).join('');
+    }
+
+    function toggleThemeMenu(e) {
+        e.stopPropagation();
+        document.getElementById('theme-menu').classList.toggle('show');
+    }
+
+    function setTheme(id) {
+        applyTheme(id);
+        renderThemeMenu();
+        document.getElementById('theme-menu').classList.remove('show');
     }
 
     function applyTranslations() {
@@ -545,6 +447,8 @@
         document.querySelectorAll('[data-t-title]').forEach(el => {
             el.title = t(el.getAttribute('data-t-title'));
         });
+        ['ch', 'access'].forEach(updateFilterButton);
+        renderThemeMenu();
     }
 
     initTheme();
@@ -554,6 +458,11 @@
     function api(url, opts = {}) {
         return fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opts })
             .then(r => { if (r.status === 401) { window.location.href = '/login'; throw new Error('Unauthorized'); } return r.ok ? r.json() : Promise.reject(r); });
+    }
+
+    async function errorDetail(e, fallback) {
+        try { const d = (await e.json()).detail; return typeof d === 'string' ? (TRANSLATIONS[currentLang]?.[d] ? t(d) : d) : fallback; }
+        catch (_) { return fallback; }
     }
 
     function showPanel(name, btn) {
@@ -577,60 +486,63 @@
         ]);
         loadPlaylistInfo();
         document.getElementById('stats-grid').innerHTML = `
-            <div class="stat-card"><div class="value">${stats.total_channels}</div><div class="label">${t('total_channels')}</div></div>
-            <div class="stat-card green"><div class="value">${stats.alive_channels}</div><div class="label">${t('alive')}</div></div>
-            <div class="stat-card red"><div class="value">${stats.dead_channels}</div><div class="label">${t('dead')}</div></div>
-            <div class="stat-card yellow"><div class="value">${stats.sources}</div><div class="label">${t('playlist_sources')}</div></div>
-            <div class="stat-card"><div class="value">${epgSources.length}</div><div class="label">${t('epg_sources')}</div></div>
-            <div class="stat-card"><div class="value">${stats.avg_response_ms != null ? Math.round(stats.avg_response_ms) + 'ms' : '-'}</div><div class="label">${t('avg_response')}</div></div>
+            <div class="stat-card"><div class="label">${t('total_channels')}</div><div class="value">${stats.total_channels}</div></div>
+            <div class="stat-card green"><div class="label">${t('alive')}</div><div class="value">${stats.alive_channels}</div></div>
+            <div class="stat-card red"><div class="label">${t('dead')}</div><div class="value">${stats.dead_channels}</div></div>
+            <div class="stat-card"><div class="label">${t('playlist_sources')}</div><div class="value">${stats.sources}</div></div>
+            <div class="stat-card"><div class="label">${t('epg_sources')}</div><div class="value">${epgSources.length}</div></div>
+            <div class="stat-card"><div class="label">${t('avg_response')}</div><div class="value">${stats.avg_response_ms != null ? Math.round(stats.avg_response_ms) + '<span style="font-size:15px;color:var(--text-2);font-weight:500"> ' + t('unit_ms') + '</span>' : '—'}</div></div>
         `;
         const btn = document.getElementById('check-btn');
         btn.disabled = status.in_progress;
         btn.textContent = status.in_progress ? t('checking') : t('btn_check');
-        if (status.in_progress) pollCheckStatus();
+        if (status.in_progress) { showProgress(true); pollCheckStatus(); }
         await loadAllChannels();
     }
 
     function toast(msg, type = 'success') {
-        const t = document.createElement('div');
-        t.className = 'toast ' + type;
-        t.textContent = msg;
-        document.body.appendChild(t);
-        setTimeout(() => t.remove(), 3000);
+        document.querySelectorAll('.toast').forEach(x => x.remove());
+        const el = document.createElement('div');
+        el.className = 'toast ' + type;
+        el.textContent = msg;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 3200);
     }
 
-    function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+    function esc(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+    function updateFilterButton(prefix) {
+        const el = document.getElementById(prefix + '-filters');
+        const btn = document.getElementById(prefix + '-filter-toggle');
+        if (!el || !btn) return;
+        btn.textContent = (el.style.display === 'none' ? '' : '✕ ') + t('btn_filters');
+        btn.classList.toggle('on', el.style.display !== 'none');
+    }
 
     function toggleFilters(prefix) {
         const el = document.getElementById(prefix + '-filters');
-        const btn = document.getElementById(prefix + '-filter-toggle');
-        if (el.style.display === 'none') {
-            el.style.display = 'flex';
-            btn.textContent = '− Фильтры';
-        } else {
-            el.style.display = 'none';
-            btn.textContent = '+ Фильтры';
-        }
+        el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+        updateFilterButton(prefix);
     }
 
     function fmtTime(ms) {
-        if (ms == null) return '<span class="response-time">-</span>';
-        if (ms < 1000) return `<span class="response-time fast">${Math.round(ms)}мс</span>`;
-        if (ms < 3000) return `<span class="response-time medium">${(ms/1000).toFixed(1)}с</span>`;
-        return `<span class="response-time slow">${(ms/1000).toFixed(1)}с</span>`;
+        if (ms == null) return '<span class="response-time">—</span>';
+        if (ms < 1000) return `<span class="response-time fast">${Math.round(ms)} ${t('unit_ms')}</span>`;
+        if (ms < 3000) return `<span class="response-time medium">${(ms/1000).toFixed(1)} ${t('unit_s')}</span>`;
+        return `<span class="response-time slow">${(ms/1000).toFixed(1)} ${t('unit_s')}</span>`;
     }
 
     function fmtDate(ts) {
-        if (!ts) return '-';
-        return new Date(ts * 1000).toLocaleString('ru');
+        if (!ts) return '—';
+        return new Date(ts * 1000).toLocaleString(currentLang === 'ru' ? 'ru' : 'en', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     }
 
     function statusText(ch) {
-        if (ch.last_check == null) return t('status_unknown');
-        if (!ch.is_alive) return t('status_dead');
-        if (ch.response_time_ms < 1000) return t('status_alive');
-        if (ch.response_time_ms < 3000) return t('status_alive');
-        return t('status_alive');
+        if (ch.last_check == null) return '<span class="status-text unknown">' + t('status_unknown') + '</span>';
+        if (!ch.is_alive) return '<span class="status-text dead">' + t('status_dead') + '</span>';
+        if (ch.response_time_ms < 1000) return '<span class="status-text fast">' + t('status_alive') + '</span>';
+        if (ch.response_time_ms < 3000) return '<span class="status-text medium">' + t('status_alive') + '</span>';
+        return '<span class="status-text slow">' + t('status_alive') + '</span>';
     }
 
     function statusDot(ch) {
@@ -670,7 +582,7 @@
     function updateSortIndicators(tableId, key, asc) {
         const ths = document.querySelectorAll(`#${tableId} th`);
         ths.forEach(th => { th.classList.remove('sorted'); });
-        const cols = { status: 0, name: 1, group: 2, source: 3, response: 4, last_check: 5, url: 6 };
+        const cols = { status: 0, name: 1, group: 2, source: 3, response: 4, availability: 5, last_check: 6, url: 7 };
         const idx = cols[key];
         if (idx !== undefined && ths[idx]) {
             ths[idx].classList.add('sorted');
@@ -681,27 +593,47 @@
     function chRow(ch, showLastCheck = false) {
         let urlDisplay = ch.url;
         try { const u = new URL(ch.url); urlDisplay = u.hostname + u.pathname.substring(0, 35); } catch(e) {}
-        let availPct = '-';
+        let availPct = '<span class="response-time">—</span>';
         if (ch.total_checks > 0) {
             const pct = Math.round((ch.alive_checks / ch.total_checks) * 100);
             const cls = pct >= 90 ? 'fast' : pct >= 50 ? 'medium' : 'slow';
             availPct = `<span class="response-time ${cls}">${pct}%</span>`;
         }
         const enabled = ch.enabled !== undefined ? ch.enabled : 1;
+        // Канал не проходит правила плейлиста (недоступен, медленный и т.п.) — выключен автоматически
+        const excluded = !!ch.rule_reason;
+        const toggleTitle = excluded ? t('excluded_' + ch.rule_reason) : (enabled ? t('in_playlist') : t('disabled_manually'));
         const safeName = esc(ch.name).replace(/'/g, "\\'");
         const safeGroup = esc(ch.group_title).replace(/'/g, "\\'");
         const editOnClick = `showChannelModal(${ch.id}, '${safeName}', '${safeGroup}')`;
         return `<tr style="cursor:pointer;" onclick="${editOnClick}">
-            <td>${statusDot(ch)} ${statusText(ch)}</td>
-            <td><label class="toggle" style="margin-right:6px;" onclick="event.stopPropagation()"><input type="checkbox" ${enabled ? 'checked' : ''} onchange="toggleChannel(${ch.id}, this.checked)"><span class="slider"></span></label><strong>${safeName}</strong></td>
-            <td><span class="group-badge" style="cursor:pointer;">${safeGroup}</span></td>
-            <td>${esc(ch.source_name || '')}</td>
+            <td style="white-space:nowrap">${statusDot(ch)}${statusText(ch)}</td>
+            <td><div class="name-cell"><label class="toggle${excluded ? ' auto-off' : ''}" title="${toggleTitle}" onclick="event.stopPropagation()"><input type="checkbox" ${enabled && !excluded ? 'checked' : ''} ${excluded ? 'disabled' : ''} onchange="toggleChannel(${ch.id}, this.checked)"><span class="slider"></span></label><strong${excluded ? ' style="color:var(--text-2)"' : ''}>${esc(ch.name)}</strong></div></td>
+            <td><span class="group-badge">${esc(ch.group_title)}</span></td>
+            <td style="color:var(--text-2)">${esc(ch.source_name || '')}</td>
             <td>${fmtTime(ch.response_time_ms)}</td>
             <td>${availPct}</td>
-            ${showLastCheck ? '<td>' + fmtDate(ch.last_check) + '</td>' : ''}
+            ${showLastCheck ? '<td style="color:var(--text-2);white-space:nowrap">' + fmtDate(ch.last_check) + '</td>' : ''}
             <td class="url-cell" title="${esc(ch.url)}">${esc(urlDisplay)}</td>
-            <td><span style="cursor:pointer;font-size:14px;" onclick="event.stopPropagation();${editOnClick}">✏️</span></td>
+            <td><div class="row-actions"><button class="icon-btn sm" onclick="event.stopPropagation();${editOnClick}" title="${t('edit_channel')}">${ICON_EDIT}</button></div></td>
         </tr>`;
+    }
+
+    function linkCard(label, url, icon) {
+        return `<div class="link-card">
+            <div class="link-icon">${icon}</div>
+            <div class="link-body"><div class="link-label">${label}</div><a class="link-url" href="${url}" target="_blank">${url}</a></div>
+            <button class="icon-btn" onclick="copyText('${url}')" title="${t('copy')}">${ICON_COPY}</button>
+        </div>`;
+    }
+
+    async function copyText(text) {
+        try { await navigator.clipboard.writeText(text); toast(t('copied')); }
+        catch (e) {
+            const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select();
+            try { document.execCommand('copy'); toast(t('copied')); } catch (_) {}
+            ta.remove();
+        }
     }
 
     async function loadPlaylistInfo() {
@@ -711,10 +643,12 @@
             const addrEl = document.getElementById('playlist-address');
             const lastCheck = info.last_check ? fmtDate(info.last_check) : t('not_checked');
             const lastEpg = info.last_epg_update ? fmtDate(info.last_epg_update) : t('never');
-            const epgInfo = info.epg_channel_count > 0 ? ` | ${t('tvg_program')}: <strong>${info.epg_channel_count}</strong> ${t('channels_word')} | ${t('cache')}: <strong>${lastEpg}</strong>` : '';
-            el.innerHTML = `<span>${t('playlist_info')}: <strong><span id="playlist-count">${info.channel_count}</span></strong> ${t('channels_word')}</span> <span style="margin:0 12px;color:var(--border);">|</span> <span>${t('last_check')}: <strong>${lastCheck}</strong></span>${epgInfo}`;
+            const epgInfo = info.epg_channel_count > 0 ? `<span>${t('tvg_program')}: <strong>${info.epg_channel_count}</strong> ${t('channels_word')}</span><span>${t('cache')}: <strong>${lastEpg}</strong></span>` : '';
+            el.innerHTML = `<span>${t('playlist_info')}: <strong id="playlist-count">${info.channel_count}</strong> ${t('channels_word')}</span><span>${t('last_check')}: <strong>${lastCheck}</strong></span>${epgInfo}`;
             const baseUrl = window.location.origin;
-            addrEl.innerHTML = `${t('playlist_address')}: <a href="${baseUrl}/rus_fixed.m3u" target="_blank" style="color:var(--accent);text-decoration:underline;">${baseUrl}/rus_fixed.m3u</a> &nbsp;|&nbsp; ${t('epg_address')}: <a href="${baseUrl}/epg.xml" target="_blank" style="color:var(--accent);text-decoration:underline;">${baseUrl}/epg.xml</a>`;
+            addrEl.innerHTML =
+                linkCard(t('playlist_address'), `${baseUrl}/rus_fixed.m3u`, '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h7"/><path d="M17 15v6l4-3z" fill="currentColor"/></svg>') +
+                linkCard(t('epg_address'), `${baseUrl}/epg.xml`, '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>');
         } catch(e) {}
     }
 
@@ -735,8 +669,10 @@
         document.getElementById('progress-container').style.display = show ? 'block' : 'none';
     }
 
+    let pollTimer = null;
     function pollCheckStatus() {
-        const iv = setInterval(async () => {
+        if (pollTimer) return;
+        pollTimer = setInterval(async () => {
             const s = await api('/api/check/status');
             if (s.in_progress && s.progress) {
                 const p = s.progress;
@@ -745,7 +681,8 @@
                 document.getElementById('progress-text').textContent = p.stage + (p.total > 0 ? ` (${p.current}/${p.total})` : '');
             }
             if (!s.in_progress) {
-                clearInterval(iv);
+                clearInterval(pollTimer);
+                pollTimer = null;
                 document.getElementById('check-btn').disabled = false;
                 document.getElementById('check-btn').textContent = t('btn_check');
                 showProgress(false);
@@ -755,33 +692,32 @@
         }, 1500);
     }
 
+    function sourceStatus(s, withError) {
+        if (s.last_check == null) return `<span class="status-dot unknown"></span>${t('source_not_checked')}`;
+        if (s.is_alive) {
+            const msText = s.response_time_ms ? ` <span style="color:var(--text-3)">· ${Math.round(s.response_time_ms)} ${t('unit_ms')}</span>` : '';
+            return `<span class="status-dot alive"></span>${t('source_available')}${msText}`;
+        }
+        const errText = withError && s.error_message ? ` <span style="color:var(--text-3)">— ${esc(s.error_message.substring(0, 60))}</span>` : '';
+        return `<span class="status-dot dead"></span>${t('source_unavailable')}${errText}`;
+    }
+
     async function loadSources() {
         allSourcesData = await api('/api/sources');
         document.getElementById('sources-list').innerHTML = allSourcesData.length === 0
-            ? `<tr><td colspan="7" class="empty-state"><p>${t('empty_sources')}</p></td></tr>`
-            : allSourcesData.map(s => {
-                let statusHtml;
-                if (s.last_check == null) {
-                    statusHtml = `<span class="status-dot unknown"></span>${t('source_not_checked')}`;
-                } else if (s.is_alive) {
-                    const msText = s.response_time_ms ? ` (${Math.round(s.response_time_ms)}ms)` : '';
-                    statusHtml = `<span class="status-dot alive"></span>${t('source_available')}${msText}`;
-                } else {
-                    statusHtml = `<span class="status-dot dead"></span>${t('source_unavailable')}`;
-                }
-                return `<tr>
+            ? `<tr><td colspan="7" class="empty-state">${t('empty_sources')}</td></tr>`
+            : allSourcesData.map(s => `<tr>
                     <td><strong>${esc(s.name)}</strong></td>
                     <td class="url-cell" title="${esc(s.url)}">${esc(s.url)}</td>
-                    <td>${statusHtml}</td>
+                    <td style="white-space:nowrap">${sourceStatus(s, false)}</td>
                     <td>${s.channel_count || 0}</td>
-                    <td>${s.last_check ? fmtDate(s.last_check) : '-'}</td>
+                    <td style="color:var(--text-2);white-space:nowrap">${fmtDate(s.last_check)}</td>
                     <td><label class="toggle"><input type="checkbox" ${s.enabled ? 'checked' : ''} onchange="toggleSource(${s.id}, this.checked)"><span class="slider"></span></label></td>
-                    <td>
-                        <button class="btn btn-secondary btn-small" onclick="editSource(${s.id})" title="${t('edit_source')}">✏️</button>
-                        <button class="btn btn-danger btn-small" onclick="deleteSource(${s.id})" title="${t('btn_delete')}">🗑️</button>
-                    </td>
-                </tr>`;
-            }).join('');
+                    <td><div class="row-actions">
+                        <button class="icon-btn sm" onclick="editSource(${s.id})" title="${t('edit_source')}">${ICON_EDIT}</button>
+                        <button class="icon-btn sm danger" onclick="deleteSource(${s.id})" title="${t('btn_delete')}">${ICON_DELETE}</button>
+                    </div></td>
+                </tr>`).join('');
         const sel = document.getElementById('ch-source-filter');
         const cur = sel.value;
         sel.innerHTML = `<option value="">${t('all_sources')}</option>` + allSourcesData.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
@@ -793,31 +729,19 @@
     async function loadEPGSources() {
         allEPGSourcesData = await api('/api/epg-sources');
         document.getElementById('epg-sources-list').innerHTML = allEPGSourcesData.length === 0
-            ? `<tr><td colspan="7" class="empty-state"><p>${t('empty_epg_sources')}</p></td></tr>`
-            : allEPGSourcesData.map(s => {
-                let statusHtml;
-                if (s.last_check == null) {
-                    statusHtml = `<span class="status-dot unknown"></span>${t('source_not_checked')}`;
-                } else if (s.is_alive) {
-                    const msText = s.response_time_ms ? ` (${Math.round(s.response_time_ms)}ms)` : '';
-                    statusHtml = `<span class="status-dot alive"></span>${t('source_available')}${msText}`;
-                } else {
-                    const errText = s.error_message ? ` — ${esc(s.error_message.substring(0, 60))}` : '';
-                    statusHtml = `<span class="status-dot dead"></span>${t('source_unavailable')}${errText}`;
-                }
-                return `<tr>
+            ? `<tr><td colspan="7" class="empty-state">${t('empty_epg_sources')}</td></tr>`
+            : allEPGSourcesData.map(s => `<tr>
                     <td><strong>${esc(s.name)}</strong></td>
                     <td class="url-cell" title="${esc(s.url)}">${esc(s.url)}</td>
                     <td><label class="toggle"><input type="checkbox" ${s.enabled ? 'checked' : ''} onchange="toggleEPGSource(${s.id}, this.checked)"><span class="slider"></span></label></td>
-                    <td>${statusHtml}</td>
+                    <td>${sourceStatus(s, true)}</td>
                     <td>${s.channel_count || 0}</td>
-                    <td>${s.last_download ? fmtDate(s.last_download) : 'Никогда'}</td>
-                    <td>
-                        <button class="btn btn-secondary btn-small" onclick="editEPGSource(${s.id})" title="${t('edit_epg_source')}">✏️</button>
-                        <button class="btn btn-danger btn-small" onclick="deleteEPGSource(${s.id})" title="${t('btn_delete')}">🗑️</button>
-                    </td>
-                </tr>`;
-            }).join('');
+                    <td style="color:var(--text-2);white-space:nowrap">${s.last_download ? fmtDate(s.last_download) : t('never_checked')}</td>
+                    <td><div class="row-actions">
+                        <button class="icon-btn sm" onclick="editEPGSource(${s.id})" title="${t('edit_epg_source')}">${ICON_EDIT}</button>
+                        <button class="icon-btn sm danger" onclick="deleteEPGSource(${s.id})" title="${t('btn_delete')}">${ICON_DELETE}</button>
+                    </div></td>
+                </tr>`).join('');
     }
 
     function showEPGSourceModal(id = null) {
@@ -844,14 +768,13 @@
         const id = document.getElementById('epg-src-edit-id').value;
         const data = { name: document.getElementById('epg-src-name').value, url: document.getElementById('epg-src-url').value, enabled: document.getElementById('epg-src-enabled').checked };
         if (!data.name || !data.url) { toast(t('toast_name_url_required'), 'error'); return; }
+        const btn = document.querySelector('#epg-source-modal .btn-primary');
         try {
             if (id) {
                 await api(`/api/epg-sources/${id}`, { method: 'PUT', body: JSON.stringify(data) });
             } else {
-                const btn = document.querySelector('#epg-source-modal .btn:not(.btn-secondary)');
                 if (btn) { btn.disabled = true; btn.textContent = t('checking'); }
                 const res = await api('/api/epg-sources', { method: 'POST', body: JSON.stringify(data) });
-                if (btn) { btn.disabled = false; btn.textContent = t('btn_save'); }
                 if (res.channels_found !== undefined) {
                     toast(`${t('toast_epg_added')}: ${res.channels_found} ${t('channels_word')}`);
                 }
@@ -860,10 +783,9 @@
             if (id) toast(t('toast_epg_updated'));
             loadEPGSources();
         } catch(e) {
-            const btn = document.querySelector('#epg-source-modal .btn:not(.btn-secondary)');
+            toast(await errorDetail(e, t('toast_error')), 'error');
+        } finally {
             if (btn) { btn.disabled = false; btn.textContent = t('btn_save'); }
-            const msg = e.json ? (await e.json()).detail : 'Ошибка сохранения';
-            toast(msg, 'error');
         }
     }
 
@@ -883,11 +805,7 @@
 
     async function loadAllChannels() {
         allChannelsData = await api('/api/channels');
-        const groups = [...new Set(allChannelsData.map(c => c.group_title))].sort();
-        const sel = document.getElementById('ch-group-filter');
-        const curGrp = sel.value;
-        sel.innerHTML = `<option value="">${t('all_groups')}</option>` + groups.map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
-        sel.value = curGrp;
+        rebuildGroupFilter();
         renderChannels();
     }
 
@@ -910,7 +828,7 @@
         });
         filtered = sortArray(filtered, chSortKey, chSortAsc);
         document.getElementById('all-channels').innerHTML = filtered.length === 0
-            ? `<tr><td colspan="7" class="empty-state"><p>${t('empty_channels')}</p></td></tr>`
+            ? `<tr><td colspan="9" class="empty-state">${t('empty_channels')}</td></tr>`
             : filtered.map(c => chRow(c, true)).join('');
         document.getElementById('channels-count').textContent = `${t('channels_shown')}: ${filtered.length} ${t('channels_of')} ${allChannelsData.length}`;
         updateSortIndicators('panel-channels', chSortKey, chSortAsc);
@@ -946,23 +864,20 @@
         const id = document.getElementById('src-edit-id').value;
         const data = { name: document.getElementById('src-name').value, url: document.getElementById('src-url').value, enabled: document.getElementById('src-enabled').checked };
         if (!data.name || !data.url) { toast(t('toast_name_url_required'), 'error'); return; }
-        const btn = document.querySelector('#source-modal .btn:not(.btn-secondary)');
+        const btn = document.querySelector('#source-modal .btn-primary');
         if (btn) { btn.disabled = true; btn.textContent = t('checking'); }
         try {
             if (id) {
                 await api(`/api/sources/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+                toast(t('toast_source_updated'));
             } else {
                 const res = await api('/api/sources', { method: 'POST', body: JSON.stringify(data) });
-                if (res.channels_found !== undefined) {
-                    toast(`${t('toast_source_added')}: ${res.channels_found} ${t('channels_word')}`);
-                }
+                toast(res.channels_found !== undefined ? `${t('toast_source_added')}: ${res.channels_found} ${t('channels_word')}` : t('toast_source_added'));
             }
             closeSourceModal();
-            if (!id) toast(t('toast_source_added'));
             loadSources();
         } catch(e) {
-            const msg = e.json ? (await e.json()).detail : e.message;
-            toast(msg || t('toast_error'), 'error');
+            toast(await errorDetail(e, t('toast_error')), 'error');
         } finally {
             if (btn) { btn.disabled = false; btn.textContent = t('btn_save'); }
         }
@@ -988,7 +903,6 @@
         document.getElementById('set-timeout').value = s.check_timeout;
         document.getElementById('set-parallel').value = s.check_parallel;
         document.getElementById('set-login').value = s.auth_login;
-        document.getElementById('set-password').value = s.auth_password;
         document.getElementById('pl-all').checked = s.playlist_all;
         document.getElementById('pl-fast').checked = s.playlist_fast;
         document.getElementById('pl-medium').checked = s.playlist_medium;
@@ -996,9 +910,9 @@
         document.getElementById('set-min-availability').value = s.min_availability;
         document.getElementById('set-epg-interval').value = s.epg_update_interval;
         document.getElementById('set-availability-period').value = s.availability_period_days;
-        let html = `<p style="margin-bottom:6px;">${t('col_status')}: <strong>${status.in_progress ? t('checking') : t('status_waiting')}</strong></p>`;
-        if (status.last_check) html += `<p style="font-size:12px;color:var(--text-muted);">${t('last')}: ${fmtDate(status.last_check)}</p>`;
-        if (status.next_check) html += `<p style="font-size:12px;color:var(--text-muted);">${t('next')}: ${fmtDate(status.next_check)}</p>`;
+        let html = `<p>${status.in_progress ? '<span class="status-dot" style="background:var(--accent)"></span>' + t('checking') : '<span class="status-dot alive"></span>' + t('status_waiting')}</p>`;
+        if (status.last_check) html += `<div class="muted">${t('last')}: ${fmtDate(status.last_check)}</div>`;
+        if (status.next_check) html += `<div class="muted">${t('next')}: ${fmtDate(status.next_check)}</div>`;
         document.getElementById('scheduler-status').innerHTML = html;
     }
 
@@ -1022,48 +936,41 @@
             min_availability: parseInt(document.getElementById('set-min-availability').value),
         })});
         const res = await api('/api/playlist/generate', { method: 'POST' });
-        document.getElementById('playlist-count').textContent = res.channel_count;
+        if (allChannelsData.length) loadAllChannels();
+        const cnt = document.getElementById('playlist-count');
+        if (cnt) cnt.textContent = res.channel_count;
         toast(t('toast_rules_saved') + ': ' + res.channel_count + ' ' + t('channels_word'));
     }
 
     async function saveAuthSettings() {
+        const current = document.getElementById('set-current-password').value;
         const password = document.getElementById('set-password').value;
         const passwordRepeat = document.getElementById('set-password-repeat').value;
-        if (password !== passwordRepeat) {
-            toast(t('toast_passwords_mismatch'), 'error');
-            return;
+        if (!current) { toast(t('toast_current_password_required'), 'error'); return; }
+        if (password.length < 6) { toast(t('password_too_short'), 'error'); return; }
+        if (password !== passwordRepeat) { toast(t('toast_passwords_mismatch'), 'error'); return; }
+        try {
+            await api('/api/auth/password', { method: 'POST', body: JSON.stringify({
+                current_password: current,
+                new_password: password,
+                new_login: document.getElementById('set-login').value,
+            })});
+            ['set-current-password', 'set-password', 'set-password-repeat'].forEach(i => document.getElementById(i).value = '');
+            toast(t('toast_auth_saved'));
+        } catch (e) {
+            toast(await errorDetail(e, t('toast_error')), 'error');
         }
-        await api('/api/settings', { method: 'PUT', body: JSON.stringify({
-            auth_login: document.getElementById('set-login').value,
-            auth_password: password,
-        })});
-        document.getElementById('set-password').value = '';
-        document.getElementById('set-password-repeat').value = '';
-        toast(t('toast_auth_saved'));
     }
 
     function onPlaylistAllChange(checked) {
-        if (checked) {
-            document.getElementById('pl-fast').checked = true;
-            document.getElementById('pl-medium').checked = true;
-            document.getElementById('pl-slow').checked = true;
-        } else {
-            document.getElementById('pl-fast').checked = false;
-            document.getElementById('pl-medium').checked = false;
-            document.getElementById('pl-slow').checked = false;
-        }
+        ['pl-fast', 'pl-medium', 'pl-slow'].forEach(i => document.getElementById(i).checked = checked);
     }
 
     function onPlaylistSubChange(type, checked) {
         if (!checked) {
             document.getElementById('pl-all').checked = false;
-        } else {
-            const fast = document.getElementById('pl-fast').checked;
-            const medium = document.getElementById('pl-medium').checked;
-            const slow = document.getElementById('pl-slow').checked;
-            if (fast && medium && slow) {
-                document.getElementById('pl-all').checked = true;
-            }
+        } else if (['pl-fast', 'pl-medium', 'pl-slow'].every(i => document.getElementById(i).checked)) {
+            document.getElementById('pl-all').checked = true;
         }
     }
 
@@ -1074,14 +981,17 @@
     let accessOffset = 0;
     const accessLimit = 10;
 
-    async function loadAccessStats() {
-        const stats = await api('/api/access/stats');
+    function renderAccessStats(stats) {
         document.getElementById('access-stats').innerHTML = `
-            <div class="stat-card"><div class="value">${stats.total}</div><div class="label">${t('total_requests')}</div></div>
-            <div class="stat-card green"><div class="value">${stats.playlist}</div><div class="label">${t('filter_playlists')}</div></div>
-            <div class="stat-card yellow"><div class="value">${stats.epg}</div><div class="label">${t('filter_epg')}</div></div>
-            <div class="stat-card"><div class="value">${stats.unique_ips}</div><div class="label">${t('unique_ips')}</div></div>
+            <div class="stat-card"><div class="label">${t('total_requests')}</div><div class="value">${stats.total}</div></div>
+            <div class="stat-card"><div class="label">${t('filter_playlists')}</div><div class="value">${stats.playlist}</div></div>
+            <div class="stat-card"><div class="label">${t('filter_epg')}</div><div class="value">${stats.epg}</div></div>
+            <div class="stat-card"><div class="label">${t('unique_ips')}</div><div class="value">${stats.unique_ips}</div></div>
         `;
+    }
+
+    async function loadAccessStats() {
+        renderAccessStats(await api('/api/access/stats'));
     }
 
     async function loadAccessStatsForPeriod(dateFrom, dateTo) {
@@ -1090,13 +1000,7 @@
         if (dateFrom) params.push(`date_from=${dateFrom}`);
         if (dateTo) params.push(`date_to=${dateTo}`);
         if (params.length) url += '?' + params.join('&');
-        const stats = await api(url);
-        document.getElementById('access-stats').innerHTML = `
-            <div class="stat-card"><div class="value">${stats.total}</div><div class="label">${t('total_requests')}</div></div>
-            <div class="stat-card green"><div class="value">${stats.playlist}</div><div class="label">${t('filter_playlists')}</div></div>
-            <div class="stat-card yellow"><div class="value">${stats.epg}</div><div class="label">${t('filter_epg')}</div></div>
-            <div class="stat-card"><div class="value">${stats.unique_ips}</div><div class="label">${t('unique_ips')}</div></div>
-        `;
+        renderAccessStats(await api(url));
     }
 
     async function onAccessDateChange() {
@@ -1122,16 +1026,16 @@
         const data = await api(url);
         const log = data.items;
         document.getElementById('access-log').innerHTML = log.length === 0
-            ? `<tr><td colspan="4" class="empty-state"><p>${t('no_records')}</p></td></tr>`
+            ? `<tr><td colspan="4" class="empty-state">${t('no_records')}</td></tr>`
             : log.map(l => `<tr>
-                <td>${fmtDate(l.timestamp)}</td>
-                <td><span class="group-badge">${esc(l.endpoint)}</span></td>
-                <td>${esc(l.ip_address)}</td>
-                <td class="url-cell" title="${esc(l.user_agent)}">${esc(l.user_agent)}</td>
+                <td style="white-space:nowrap">${fmtDate(l.timestamp)}</td>
+                <td><span class="group-badge">${esc(l.endpoint === 'epg' ? t('filter_epg') : l.endpoint === 'playlist' ? t('filter_playlists') : l.endpoint)}</span></td>
+                <td style="font-family:var(--font-mono);font-size:12px">${esc(l.ip_address)}</td>
+                <td class="url-cell" style="max-width:420px" title="${esc(l.user_agent)}">${esc(l.user_agent)}</td>
             </tr>`).join('');
         const totalPages = Math.ceil(data.total / accessLimit);
         const curPage = Math.floor(accessOffset / accessLimit) + 1;
-        document.getElementById('access-info').textContent = `${t('showing')} ${log.length} ${t('channels_of')} ${data.total} (${t('page')} ${curPage}/${totalPages || 1})`;
+        document.getElementById('access-info').textContent = `${t('showing')} ${log.length} ${t('channels_of')} ${data.total} · ${t('page')} ${curPage}/${totalPages || 1}`;
         document.getElementById('access-prev').disabled = accessOffset === 0;
         document.getElementById('access-next').disabled = accessOffset + accessLimit >= data.total;
     }
@@ -1156,7 +1060,7 @@
     async function saveChannelGroup() {
         const id = document.getElementById('ch-edit-id').value;
         const group = document.getElementById('ch-edit-group').value;
-        if (!group) { toast(t('toast_name_url_required'), 'error'); return; }
+        if (!group) { toast(t('toast_group_required'), 'error'); return; }
         try {
             await api(`/api/channels/${id}/group?group_title=${encodeURIComponent(group)}`, { method: 'PUT' });
             const ch = allChannelsData.find(c => c.id === parseInt(id));
@@ -1186,7 +1090,11 @@
     async function deleteAccessLogs() {
         const dateFrom = document.getElementById('access-date-from').value;
         const dateTo = document.getElementById('access-date-to').value;
-        if (!dateFrom && !dateTo) { toast('Укажите даты для удаления', 'error'); return; }
+        if (!dateFrom && !dateTo) {
+            toast(t('toast_dates_required'), 'error');
+            if (document.getElementById('access-filters').style.display === 'none') toggleFilters('access');
+            return;
+        }
         if (!confirm(`${t('delete_selected')}${dateFrom ? ' ' + t('period_from') + ' ' + dateFrom : ''}${dateTo ? ' ' + t('period_to') + ' ' + dateTo : ''}?`)) return;
         let url = '/api/access/log?';
         if (dateFrom) url += `date_from=${dateFrom}`;
@@ -1197,6 +1105,10 @@
         loadAccessLog(dateFrom, dateTo);
         loadAccessStatsForPeriod(dateFrom, dateTo);
     }
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.show').forEach(m => m.classList.remove('show'));
+    });
 
     async function logout() {
         await fetch('/api/logout', { method: 'POST' });

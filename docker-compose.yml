@@ -5,14 +5,15 @@ services:
     container_name: tangle
     environment:
       - PYTHONUNBUFFERED=1
-      - DB_PATH=/data/iptv.db
-      - PLAYLIST_PATH=/playlist/rus_fixed.m3u
-      - EPG_PATH=/playlist/epg.xml
+      - PUBLIC_URL=${PUBLIC_URL:-http://localhost:9239}
+      - EPG_DAYS=${EPG_DAYS:-7}
+      - ADMIN_LOGIN=${ADMIN_LOGIN:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
     volumes:
       - ./data:/data
       - ./playlist:/playlist
     ports:
-      - "9239:9239"
+      - "${TANGLE_PORT:-9239}:9239"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9239/api/check_login"]

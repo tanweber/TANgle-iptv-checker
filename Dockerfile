@@ -2,11 +2,11 @@ FROM python:3.11-alpine
 
 WORKDIR /app
 
+COPY requirements.txt /app/
 RUN apk add --no-cache curl && \
-    pip install --no-cache-dir requests fastapi uvicorn[standard]
+    pip install --no-cache-dir -r requirements.txt
 
 COPY database.py checker_core.py epg.py app.py /app/
-COPY requirements.txt /app/
 COPY static/ /app/static/
 
 RUN mkdir -p /data

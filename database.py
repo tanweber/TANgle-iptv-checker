@@ -99,8 +99,9 @@ def init_db():
             conn.execute("INSERT INTO settings (key, value) VALUES ('check_interval', '3600')")
             conn.execute("INSERT INTO settings (key, value) VALUES ('check_parallel', '50')")
             conn.execute("INSERT INTO settings (key, value) VALUES ('check_timeout', '10')")
-            conn.execute("INSERT INTO settings (key, value) VALUES ('auth_login', 'admin')")
-            conn.execute("INSERT INTO settings (key, value) VALUES ('auth_password', 'admin')")
+            # Начальные логин и пароль (только для новой базы); меняются в интерфейсе
+            conn.execute("INSERT INTO settings (key, value) VALUES ('auth_login', ?)", (os.environ.get("ADMIN_LOGIN") or "admin",))
+            conn.execute("INSERT INTO settings (key, value) VALUES ('auth_password', ?)", (os.environ.get("ADMIN_PASSWORD") or "admin",))
             conn.execute("INSERT INTO settings (key, value) VALUES ('playlist_all', '1')")
             conn.execute("INSERT INTO settings (key, value) VALUES ('playlist_fast', '1')")
             conn.execute("INSERT INTO settings (key, value) VALUES ('playlist_medium', '1')")
@@ -232,7 +233,7 @@ def update_channel_group(channel_id, group_title):
         conn.execute("UPDATE channels SET group_title=? WHERE id=?", (group_title, channel_id))
         row = conn.execute("SELECT inf_line FROM channels WHERE id=?", (channel_id,)).fetchone()
         if row and row["inf_line"]:
-            new_inf = re.sub(r'group-title="[^"]*"', f'group-title="{group_title}"', row["inf_line"])
+            new_inf = re.sub(r'group-title="[^"]*"', lambda m: f'group-title="{group_title}"', row["inf_line"])
             if 'group-title' not in new_inf:
                 new_inf = new_inf.replace("#EXTINF:", f'#EXTINF: group-title="{group_title}" ', 1)
             conn.execute("UPDATE channels SET inf_line=? WHERE id=?", (new_inf, channel_id))

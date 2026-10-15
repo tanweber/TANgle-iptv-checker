@@ -120,7 +120,7 @@ const TRANSLATIONS = {
         slow_channels: 'Медленные (>3с)',
         slow_desc: 'красные',
         btn_save_rules: 'Сохранить правила',
-        auth: 'Авторизация',
+        auth: 'Вход в систему',
         label_login: 'Логин',
         label_password: 'Пароль',
         label_password_repeat: 'Повторите пароль',
@@ -148,8 +148,8 @@ const TRANSLATIONS = {
         col_ip: 'IP адрес',
         col_device: 'Устройство',
         no_records: 'Нет записей',
-        btn_prev: '← Назад',
-        btn_next: 'Вперёд →',
+        btn_prev: '←',
+        btn_next: '→',
         showing: 'Показано',
 
         // Toasts
@@ -158,7 +158,7 @@ const TRANSLATIONS = {
         toast_check_completed: 'Проверка завершена',
         toast_rules_saved: 'Правила сохранены',
         toast_settings_saved: 'Настройки сохранены',
-        toast_auth_saved: 'Авторизация сохранена',
+        toast_auth_saved: 'Пароль изменён',
         toast_source_added: 'Источник добавлен',
         toast_source_updated: 'Источник обновлён',
         toast_source_deleted: 'Источник удалён',
@@ -183,6 +183,43 @@ const TRANSLATIONS = {
         empty_sources: 'Источники ещё не добавлены',
         empty_epg_sources: 'EPG источники ещё не добавлены',
         empty_channels: 'Каналы не найдены',
+
+        // Redesign / auth
+        theme: 'Тема',
+        theme_auto: 'Авто',
+        theme_warm: 'Тёплая',
+        'theme_warm-dark': 'Тёплая тёмная',
+        theme_light: 'Светлая',
+        theme_dark: 'Тёмная',
+        theme_nord: 'Nord',
+        theme_forest: 'Лес',
+        in_playlist: 'В плейлисте',
+        disabled_manually: 'Отключён вручную',
+        excluded_dead: 'Отключён автоматически: канал недоступен',
+        excluded_unchecked: 'Отключён автоматически: канал ещё не проверен',
+        excluded_availability: 'Отключён автоматически: доступность ниже минимальной',
+        excluded_speed_fast: 'Отключён автоматически: быстрые каналы исключены правилами',
+        excluded_speed_medium: 'Отключён автоматически: средние каналы исключены правилами',
+        excluded_speed_slow: 'Отключён автоматически: медленные каналы исключены правилами',
+        all_channels_title: 'Все каналы',
+        sources_sub: 'Плейлисты и ТВ-программа, из которых собирается итоговый плейлист',
+        col_updated: 'Обновлено',
+        playlist_rules_sub: 'Какие каналы попадут в итоговый плейлист',
+        auth_sub: 'Смена логина и пароля администратора',
+        label_current_password: 'Текущий пароль',
+        label_new_password: 'Новый пароль',
+        btn_change_password: 'Сменить пароль',
+        access_sub: 'Кто и когда запрашивал плейлист и ТВ-программу',
+        unit_ms: 'мс',
+        unit_s: 'с',
+        copy: 'Копировать',
+        copied: 'Скопировано',
+        btn_delete: 'Удалить',
+        toast_current_password_required: 'Введите текущий пароль',
+        password_too_short: 'Пароль должен быть не короче 6 символов',
+        wrong_current_password: 'Неверный текущий пароль',
+        toast_group_required: 'Укажите группу',
+        toast_dates_required: 'Укажите даты для удаления',
     },
     en: {
         // Header
@@ -305,7 +342,7 @@ const TRANSLATIONS = {
         slow_channels: 'Slow (>3s)',
         slow_desc: 'red',
         btn_save_rules: 'Save rules',
-        auth: 'Authorization',
+        auth: 'Sign-in',
         label_login: 'Login',
         label_password: 'Password',
         label_password_repeat: 'Repeat password',
@@ -333,8 +370,8 @@ const TRANSLATIONS = {
         col_ip: 'IP Address',
         col_device: 'Device',
         no_records: 'No records',
-        btn_prev: '← Previous',
-        btn_next: 'Next →',
+        btn_prev: '←',
+        btn_next: '→',
         showing: 'Showing',
 
         // Toasts
@@ -343,7 +380,7 @@ const TRANSLATIONS = {
         toast_check_completed: 'Check completed',
         toast_rules_saved: 'Rules saved',
         toast_settings_saved: 'Settings saved',
-        toast_auth_saved: 'Authorization saved',
+        toast_auth_saved: 'Password changed',
         toast_source_added: 'Source added',
         toast_source_updated: 'Source updated',
         toast_source_deleted: 'Source deleted',
@@ -368,6 +405,43 @@ const TRANSLATIONS = {
         empty_sources: 'No sources added yet',
         empty_epg_sources: 'No EPG sources added yet',
         empty_channels: 'No channels found',
+
+        // Redesign / auth
+        theme: 'Theme',
+        theme_auto: 'Auto',
+        theme_warm: 'Warm',
+        'theme_warm-dark': 'Warm dark',
+        theme_light: 'Light',
+        theme_dark: 'Dark',
+        theme_nord: 'Nord',
+        theme_forest: 'Forest',
+        in_playlist: 'In playlist',
+        disabled_manually: 'Disabled manually',
+        excluded_dead: 'Auto-disabled: channel is unavailable',
+        excluded_unchecked: 'Auto-disabled: channel not checked yet',
+        excluded_availability: 'Auto-disabled: availability below minimum',
+        excluded_speed_fast: 'Auto-disabled: fast channels excluded by rules',
+        excluded_speed_medium: 'Auto-disabled: medium channels excluded by rules',
+        excluded_speed_slow: 'Auto-disabled: slow channels excluded by rules',
+        all_channels_title: 'All channels',
+        sources_sub: 'Playlists and TV guides the final playlist is built from',
+        col_updated: 'Updated',
+        playlist_rules_sub: 'Which channels go into the final playlist',
+        auth_sub: 'Change administrator login and password',
+        label_current_password: 'Current password',
+        label_new_password: 'New password',
+        btn_change_password: 'Change password',
+        access_sub: 'Who requested the playlist and TV guide, and when',
+        unit_ms: 'ms',
+        unit_s: 's',
+        copy: 'Copy',
+        copied: 'Copied',
+        btn_delete: 'Delete',
+        toast_current_password_required: 'Enter your current password',
+        password_too_short: 'Password must be at least 6 characters',
+        wrong_current_password: 'Current password is incorrect',
+        toast_group_required: 'Enter a group',
+        toast_dates_required: 'Choose dates to delete',
     }
 };
 
@@ -394,4 +468,20 @@ function toggleLang() {
 function initLang() {
     const saved = localStorage.getItem('lang') || 'en';
     setLang(saved);
+}
+
+const THEMES = [
+    { id: 'auto', swatch: 'linear-gradient(135deg,#faf9f5 50%,#262624 50%)' },
+    { id: 'warm', swatch: '#faf9f5' },
+    { id: 'warm-dark', swatch: '#30302e' },
+    { id: 'light', swatch: '#ffffff' },
+    { id: 'dark', swatch: '#1c1c1e' },
+    { id: 'nord', swatch: '#3b4252' },
+    { id: 'forest', swatch: '#2e4a37' },
+];
+
+function applyTheme(id) {
+    if (!THEMES.some(x => x.id === id)) id = 'auto';
+    document.documentElement.setAttribute('data-theme', id);
+    try { localStorage.setItem('theme', id); } catch (e) {}
 }

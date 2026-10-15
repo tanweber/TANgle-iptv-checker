@@ -18,8 +18,7 @@ data/
 data/epg_cache/
 
 # Generated files
-playlist/*.m3u
-playlist/epg.xml
+playlist/
 
 # Old files
 checker.cat
@@ -37,8 +36,10 @@ checketcop.py
 .DS_Store
 Thumbs.db
 
-# Docker
+# Docker / личные настройки
 docker-compose.override.yml
+.env
 
 # Backups
 *.tar.gz
+*.bak

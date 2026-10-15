@@ -1,92 +1,145 @@
 # TANgle - IPTV Checker
 
+[Русская версия](README.md)
+
 Smart web interface for IPTV playlist management.
-TANgle automatically builds a single M3U playlist from multiple sources, checks channel availability and response time, removes duplicates, and generates an up-to-date TV Guide (EPG) for active channels only.
+TANgle automatically builds a single M3U playlist from multiple sources, checks channel availability and response time, removes duplicates, and generates a week-ahead TV Guide (EPG) for the channels that made it into the playlist.
 
 Developed with [MiMo Code](https://github.com/XiaoMi/MiMo) — AI coding assistant by Xiaomi.
 
-[Русская версия](README.md)
-
 ## Features
 
-- **IPTV Channel Checking** — parallel availability testing from M3U/M3U8 playlists with response time measurement.
-- **Unified Playlist** — merge multiple playlists into one with flexible filtering by speed and availability.
-- **Channel Management** — enable/disable individual channels with checkboxes, edit channel groups. State persists across restarts.
-- **Automatic Deduplication** — duplicates are removed before publishing (fastest channel is kept).
-- **TV Guide (EPG)** — automatic download and merge of XMLTV files from multiple sources, filtered to playlist channels only.
-- **Connection Statistics** — tracking IPs, devices, access history with period filtering and deletion.
-- **Responsive Web UI** — works on desktop, tablets, and smartphones.
-- **7 Themes** — Dark, Light, Monokai, Dracula, Nord, Solarized, GitHub.
-- **Multilingual** — instant EN/RU language switching.
-- **Automation** — built-in scheduler for periodic playlist checks and EPG updates.
-- **Easy Deployment** — Docker image, one command to run.
+- **IPTV Channel Checking** — parallel availability testing of M3U/M3U8 playlists with response time measurement.
+- **Unified Playlist** — merge multiple playlists into one with rules by speed (fast / medium / slow) and minimum availability.
+- **Channel Management** — enable/disable individual channels, edit groups. Channels that don't pass the playlist rules (unavailable, unchecked, too slow, low availability) are switched off automatically, with a tooltip explaining why.
+- **Automatic Deduplication** — the fastest copy of a duplicated channel is kept.
+- **TV Guide (EPG)** — downloads and merges XMLTV from multiple sources. Each channel's guide comes from the single source with the best coverage, channel ids match the playlist's `tvg-id`, and the output is valid XML. A compressed `/epg.xml.gz` is also available.
+- **Connection Statistics** — IPs, devices, access history with period filtering and deletion.
+- **Security** — the whole API requires sign-in, the password is stored as a PBKDF2 hash, login and password can be changed in the UI.
+- **Clean, responsive UI** — works on desktop, tablets and smartphones.
+- **7 Themes** — Auto, Warm, Warm dark, Light, Dark, Nord, Forest.
+- **Multilingual** — instant EN/RU switching.
+- **Automation** — built-in scheduler for channel checks and EPG updates.
+- **Easy Deployment** — Docker, all settings in a single `.env` file.
 
 ## Screenshots
 <img width="1228" height="914" alt="s1" src="https://github.com/user-attachments/assets/4a0d0bf2-2e30-4b7c-93ca-bc893e75cab2" />
 <img width="1217" height="569" alt="s2" src="https://github.com/user-attachments/assets/bbe46017-ed14-4971-a83a-d5b33bd933cc" />
 <img width="1211" height="653" alt="s3" src="https://github.com/user-attachments/assets/afbd1dc9-ab97-48ce-b190-e528a14edebc" />
 
-## Quick Start
+## Installation
+
+Requires Docker and Docker Compose.
 
 ```bash
 git clone https://github.com/tanweber/TANgle-iptv-checker.git
 cd TANgle-iptv-checker
-docker compose up -d
+cp .env.example .env      # then edit .env
+docker compose up -d --build
 ```
 
-Open in browser: `http://localhost:9239`
+Open `http://<server-address>:9239` and sign in with the login and password from `.env` (default `admin` / `admin`). **Change the password right away**: Settings → Sign-in.
 
-Default credentials: `admin` / `admin`
+Next:
+1. **Sources** → add M3U playlists (EPG sources are preconfigured).
+2. **Channels** → "Check now". The first check and TV guide build take a few minutes.
+3. **Settings** → choose the playlist rules.
+4. Add the playlist URL `http://<address>/rus_fixed.m3u` to your player. The TV guide is picked up automatically from the playlist header, or set it manually: `http://<address>/epg.xml`.
+
+### Updating
+
+```bash
+git pull
+docker compose up -d --build
+```
+
+The database (`data/`), playlist and EPG (`playlist/`) live on the host and are kept across updates.
+
+## Configuration (`.env`)
+
+| Variable | Default | Description |
+|---|---|---|
+| `TANGLE_PORT` | `9239` | Host port for the web UI |
+| `PUBLIC_URL` | `http://localhost:9239` | Public URL of the service, no trailing `/`. Written into the playlist as the TV guide address, so players must be able to reach it (e.g. `https://iptv.example.com`) |
+| `EPG_DAYS` | `7` | How many days ahead the TV guide covers |
+| `ADMIN_LOGIN` | `admin` | Admin login — first start only |
+| `ADMIN_PASSWORD` | `admin` | Admin password — first start only |
+
+`ADMIN_LOGIN` and `ADMIN_PASSWORD` apply only to a new (empty) database. After that, change them in the UI.
+
+Everything else (check and EPG update intervals, timeouts, worker count, playlist rules) is configured in the UI under "Settings".
+
+### Reverse proxy
+
+For HTTPS, put a reverse proxy (nginx, Caddy, Traefik) in front of TANgle and set the external address in `PUBLIC_URL`. An nginx example is in `nginx.conf`. The proxy should pass the `X-Real-IP` header so connection statistics show real client IPs.
 
 ## Project Structure
 
 ```
 tangle/
-├── app.py              # FastAPI server
+├── app.py              # FastAPI server, auth, scheduler, playlist builder
 ├── database.py         # SQLite operations
 ├── checker_core.py     # Channel checker
-├── epg.py              # EPG processor
+├── epg.py              # TV guide (EPG) builder
 ├── static/
 │   ├── index.html      # Main UI
 │   ├── login.html      # Login page
+│   ├── theme.css       # Shared styles and themes
 │   └── translations.js # EN/RU translations
+├── .env.example        # Settings template
 ├── Dockerfile
 ├── docker-compose.yml
-└── nginx.conf
+└── nginx.conf          # Reverse proxy example
 ```
 
 ## API
 
+Public (no sign-in):
+
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/` | Web UI |
-| GET | `/rus_fixed.m3u` | Download playlist |
-| GET | `/epg.xml` | Download TV Guide |
-| POST | `/api/login` | Login |
+| GET | `/rus_fixed.m3u` | Playlist |
+| GET, HEAD | `/epg.xml` | TV guide (XMLTV) |
+| GET, HEAD | `/epg.xml.gz` | TV guide, gzipped |
+
+Sign-in required (session cookie):
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/api/login` | Sign in |
+| POST | `/api/auth/password` | Change login and password |
 | GET | `/api/stats` | Channel statistics |
-| GET | `/api/channels` | Channel list |
+| GET | `/api/channels` | Channel list (with the reason a channel is excluded from the playlist) |
 | PUT | `/api/channels/{id}/toggle` | Toggle channel |
 | PUT | `/api/channels/{id}/group` | Change group |
+| GET, PUT | `/api/settings` | Settings |
 | GET | `/api/sources` | Playlist sources |
 | GET | `/api/epg-sources` | EPG sources |
 | POST | `/api/check` | Trigger check |
 | GET | `/api/access/log` | Access log |
 | DELETE | `/api/access/log` | Delete log by period |
 
-## Settings
+## What's new in v2.1
 
-- Channel check interval
-- EPG update interval
-- Playlist rules (by speed and availability)
-- Channel availability calculation period
-- Add playlist sources
-- Add EPG sources
+- **Fixed the TV guide** that players failed to read:
+  - the playlist's `url-tvg` header pointed at the playlist itself instead of the EPG;
+  - programmes referenced channels that were not declared in the file;
+  - guides from different sources and regional channel copies ("+2", "+4") were mixed and overlapped;
+  - EPG channel ids didn't match the playlist's `tvg-id`, so most channels showed no guide.
+- The TV guide now covers **7 days** (configurable via `EPG_DAYS`). It is built by streaming and needs far less memory.
+- New compressed `/epg.xml.gz`. On `/epg.xml`, players that can't handle gzip (Televizo, okhttp) get the plain file — also behind a reverse proxy (nginx, Nginx Proxy Manager) that used to compress the response itself and broke guide updates in Televizo.
+- The playlist and EPG are served with `Last-Modified` and `Content-Length` and support `HEAD`, so players can check for updates.
+- **Security:** the whole API now requires sign-in (previously settings, including the password, were readable without it), the password is stored hashed, and changing it requires the current password.
+- **New design** in a clean style, 7 themes (Auto, Warm, Warm dark, Light, Dark, Nord, Forest), a redesigned login page, one-click copy of playlist and EPG URLs.
+- **Automatic switch-off** of channels that don't pass the playlist rules, with a tooltip explaining why. Speed rules are now strict: each checkbox covers only its own range.
+- All personal settings moved to `.env` (template: `.env.example`).
+- Fixed: sorting by availability, channel counters after restart, EPG update scheduling, special characters in group names; Docker image dependencies are now pinned via `requirements.txt`.
 
 ## Requirements
 
 - Docker and Docker Compose
-- 512MB RAM
-- 1GB disk space
+- 512 MB RAM
+- 2 GB disk space (the EPG source cache can take 1–1.5 GB)
 
 ## License
 
