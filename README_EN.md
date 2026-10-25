@@ -5,7 +5,7 @@
 Smart web interface for IPTV playlist management.
 TANgle automatically builds a single M3U playlist from multiple sources, checks channel availability and response time, removes duplicates, and generates a week-ahead TV Guide (EPG) for the channels that made it into the playlist.
 
-Developed with [MiMo Code](https://github.com/XiaoMi/MiMo) — AI coding assistant by Xiaomi.
+Developed with [MiMo Code](https://github.com/XiaoMi/MiMo) and Claude code.
 
 ## Features
 
